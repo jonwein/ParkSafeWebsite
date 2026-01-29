@@ -1,0 +1,18 @@
+title: ParkSafe
+description: Privacy-focused parking assistance for NYC
+theme: minima
+minima:
+  skin: dark
+
+header_pages:
+  - support.md
+
+# Build settings
+markdown: kramdown
+permalink: pretty
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
