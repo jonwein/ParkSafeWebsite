@@ -1,6 +1,6 @@
 title: ParkSafe
 description: Privacy-focused parking assistance for NYC
-theme: minima
+remote_theme: jekyll/minima
 minima:
   skin: dark
 
@@ -10,6 +10,9 @@ header_pages:
 # Build settings
 markdown: kramdown
 permalink: pretty
+
+plugins:
+  - jekyll-remote-theme
 
 # Exclude from build
 exclude:
