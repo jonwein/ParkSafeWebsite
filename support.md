@@ -49,4 +49,4 @@ Have an idea for a new feature? We'd love to hear it! Send us an email with your
 
 ---
 
-[Privacy Policy](/)
+[Privacy Policy](/) | [Contact Us](mailto:parksafellc@gmail.com?subject=ParkSafe%20Support)

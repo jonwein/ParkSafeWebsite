@@ -122,3 +122,7 @@ ParkSafe complies with GDPR requirements. Since we do not collect or process per
 ### Summary
 
 ParkSafe is designed with privacy in mind. We only use your location in real-time to show nearby parking signs—we don't store it, track it, or share it. Your reminders stay on your device. We don't collect personal information or show ads.
+
+---
+
+**Need help?** Visit our [Support page](/support/) for FAQs and contact information.
