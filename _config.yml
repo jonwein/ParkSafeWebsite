@@ -6,6 +6,8 @@ minima:
 
 header_pages:
   - index.md
+  - privacy.md
+  - terms.md
   - support.md
 
 # Build settings

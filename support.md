@@ -31,7 +31,7 @@ Currently, ParkSafe only supports New York City. We're working on adding more ci
 
 ### Is my location data being tracked?
 
-No. ParkSafe only uses your location while you're actively using the app to show nearby parking signs. We don't store or track your location. See our [Privacy Policy](/) for details.
+No. ParkSafe only uses your location while you're actively using the app to show nearby parking signs. We don't store or track your location. See our [Privacy Policy](/privacy/) for details.
 
 ---
 
@@ -49,4 +49,4 @@ Have an idea for a new feature? We'd love to hear it! Send us an email with your
 
 ---
 
-[Privacy Policy](/) | [Contact Us](mailto:parksafellc@gmail.com?subject=ParkSafe%20Support)
+[Privacy Policy](/privacy/) | [Terms of Service](/terms/) | [Contact Us](mailto:parksafellc@gmail.com?subject=ParkSafe%20Support)
