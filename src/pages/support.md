@@ -1,6 +1,7 @@
 ---
-layout: default
-title: Support
+layout: ../layouts/Markdown.astro
+title: Support · ParkSafe
+description: Get help with ParkSafe, the NYC street parking app. FAQs, bug reports and contact information.
 ---
 
 # ParkSafe Support
@@ -46,7 +47,3 @@ Found a bug? Please email us with:
 ## Feature Requests
 
 Have an idea for a new feature? We'd love to hear it! Send us an email with your suggestion.
-
----
-
-[Privacy Policy](/privacy/) | [Terms of Service](/terms/) | [Contact Us](mailto:parksafellc@gmail.com?subject=ParkSafe%20Support)

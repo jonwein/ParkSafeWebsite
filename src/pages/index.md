@@ -1,6 +1,7 @@
 ---
-layout: default
-title: Home
+layout: ../layouts/Markdown.astro
+title: ParkSafe – NYC Street Parking Signs and Reminders
+description: See every NYC parking sign on a map, save where you parked, and get reminded before restrictions start.
 ---
 
 # ParkSafe
@@ -41,10 +42,6 @@ See your parked location, countdown timer, and ASP status right from your home s
 
 ## Privacy First
 
-ParkSafe is designed with your privacy in mind. We only use your location in real-time to show nearby parking signs — we don't store it, track it, or share it. Your reminders stay on your device. We don't collect personal information or show ads.
+ParkSafe is designed with your privacy in mind. We only use your location in real-time to show nearby parking signs — we don't store it, track it, or share it. Your reminders stay on your device. ParkSafe doesn't ask for your name, email, or an account, and never shares your GPS location with advertisers. The app is supported by ads, which you can remove with an in-app purchase.
 
 Read our full [Privacy Policy](/privacy/).
-
----
-
-[Privacy Policy](/privacy/) | [Terms of Service](/terms/) | [Support](/support/) | [Contact Us](mailto:parksafellc@gmail.com)

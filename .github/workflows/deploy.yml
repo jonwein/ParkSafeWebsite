@@ -1,0 +1,60 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:edge
+      - run: npm run build
+      - name: Check URLs against the build
+        run: |
+          npx astro preview --port 4321 &
+          for _ in $(seq 1 30); do curl -sf -o /dev/null http://localhost:4321/ && break; sleep 1; done
+          npm run check:urls
+      - uses: actions/upload-artifact@v7
+        with:
+          name: site
+          path: dist/
+          retention-days: 7
+
+  # Publishes main to parksafeapp.com. Skipped until infra/deploy.sh has run and the three
+  # repository variables it prints are set.
+  deploy:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: site
+          path: dist/
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+      - run: infra/publish.sh
+        env:
+          SITE_BUCKET: ${{ vars.SITE_BUCKET }}
+          DISTRIBUTION_ID: ${{ vars.DISTRIBUTION_ID }}

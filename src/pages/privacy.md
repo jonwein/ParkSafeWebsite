@@ -1,6 +1,7 @@
 ---
-layout: default
-title: Privacy Policy
+layout: ../layouts/Markdown.astro
+title: Privacy Policy · ParkSafe
+description: How ParkSafe handles your location, device data and advertising data.
 ---
 
 # ParkSafe Privacy Policy
