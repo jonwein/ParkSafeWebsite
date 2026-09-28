@@ -47,8 +47,18 @@ if [ "$CERT_STATUS" != "ISSUED" ]; then
         echo "  $name  ->  $value"
     done
     echo
-    echo "Waiting for ACM to validate $CERT_ARN (checks every minute, up to 40 minutes)..."
-    aws_ acm wait certificate-validated --certificate-arn "$CERT_ARN"
+    # Polled here rather than with `aws acm wait certificate-validated`, which gives up after
+    # 5 minutes in current CLI versions
+    echo "Waiting for ACM to validate $CERT_ARN (checks every 30 seconds, up to an hour)..."
+    for _ in $(seq 1 120); do
+        CERT_STATUS="$(aws_ acm describe-certificate --certificate-arn "$CERT_ARN" --query Certificate.Status --output text)"
+        [ "$CERT_STATUS" != "PENDING_VALIDATION" ] && break
+        sleep 30
+    done
+    if [ "$CERT_STATUS" != "ISSUED" ]; then
+        echo "Certificate is $CERT_STATUS, not ISSUED. Check the records above, then run this script again." >&2
+        exit 1
+    fi
 fi
 echo "Certificate: $CERT_ARN"
 
