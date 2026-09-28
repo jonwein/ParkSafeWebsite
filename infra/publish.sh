@@ -39,6 +39,14 @@ aws s3 sync "$DIST_DIR" "s3://$SITE_BUCKET" \
     --exclude "_astro/*" \
     --cache-control "public,max-age=0,s-maxage=86400"
 
+# Apple fetches this to verify the app's invite links. It has no extension, so name its type.
+AASA=".well-known/apple-app-site-association"
+if [ -f "$DIST_DIR/$AASA" ]; then
+    aws s3 cp "$DIST_DIR/$AASA" "s3://$SITE_BUCKET/$AASA" \
+        --content-type application/json \
+        --cache-control "public,max-age=0,s-maxage=86400"
+fi
+
 INVALIDATION_ID="$(aws cloudfront create-invalidation \
     --distribution-id "$DISTRIBUTION_ID" \
     --paths "/*" \

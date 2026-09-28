@@ -46,10 +46,10 @@ You can disable IDFA collection at any time by denying tracking permission when 
 
 ### Referral Program (Invite Friends)
 
-When someone new to ParkSafe enters a friend's invite code, they both get a month without ads. To run this, ParkSafe sends Apple's signed record of your ParkSafe download (Apple's "app transaction") to our servers.
+When a friend installs ParkSafe with your code and parks for the first time, you both get a month without ads. To run this, ParkSafe sends Apple's signed record of your ParkSafe download (Apple's "app transaction") to our servers.
 
-- **What:** An identifier Apple assigns to your Apple Account's download of ParkSafe (not your name, email or Apple Account address), the date you first downloaded ParkSafe, your invite code, the friend's code you entered and when, how many friends have used your code, and the date your ad-free time runs until.
-- **When:** Only if you open Invite Friends or enter a friend's code. If you never use invites, nothing is sent.
+- **What:** An identifier Apple assigns to your Apple Account's download of ParkSafe (not your name, email or Apple Account address), the date you first downloaded ParkSafe, your invite code, the friend's code you used and when, whether you have parked since using it (only that it happened, not where), how many friends have used your code, and the date your ad-free time runs until.
+- **When:** Only if you open Invite Friends, use a friend's code, or open an invite link. If you never use invites, nothing is sent.
 - **Why:** To give you and your friends your ad-free months, and to make sure the new-user reward goes only to people installing ParkSafe for the first time.
 - **Storage:** In a database on Amazon Web Services. The friend whose code you used sees only a count of friends who joined, not who you are.
 

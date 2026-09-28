@@ -6,9 +6,11 @@ interface Props {
   description: string;
   /** Full-screen app page: no site header or footer */
   bare?: boolean;
+  /** Keep the page out of search results (invite links) */
+  noindex?: boolean;
 }
 
-const { title, description, bare = false } = Astro.props;
+const { title, description, bare = false, noindex = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 
@@ -26,6 +28,7 @@ const nav = [
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
