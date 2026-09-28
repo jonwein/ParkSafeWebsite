@@ -1,0 +1,178 @@
+---
+// Invite link: parksafeapp.com/r?c=CODE. With ParkSafe installed (iOS 18.4+), iOS opens the app
+// straight to its invite screen (see public/.well-known/apple-app-site-association); everyone
+// else lands here. The code comes from the query string, so this one static page serves them all.
+import Base from '../layouts/Base.astro';
+
+const appStoreURL = 'https://apps.apple.com/app/id6758868188';
+---
+
+<Base
+  title="You're Invited to ParkSafe"
+  description="Install ParkSafe with a friend's code and you both get a month without ads."
+  noindex
+>
+  <article class="invite">
+    <img class="icon" src="/icon-512.png" alt="" width="96" height="96" />
+    <h1>You're invited to ParkSafe</h1>
+    <p class="lede">
+      See every NYC parking sign on a map and get reminded before you have to move. Install it with
+      your friend's code, park once, and you both get a month without ads.
+    </p>
+
+    <div class="code-box" data-code-box hidden>
+      <span class="label">Your friend's code</span>
+      <button type="button" class="code" data-copy aria-label="Copy the code"></button>
+      <span class="copied" data-copied aria-live="polite"></span>
+    </div>
+
+    <div class="actions">
+      <a class="button primary" href={appStoreURL}>Get ParkSafe on the App Store</a>
+      <a class="button" href="parksafe://r" data-open-app hidden>I have ParkSafe: open it</a>
+    </div>
+
+    <ol class="steps">
+      <li>Install ParkSafe on an iPhone with iOS 18.4 or later.</li>
+      <li>Open it, tap <strong>Invite Friends</strong>, and enter the code under “Got a code from a friend?”</li>
+      <li>Park once. You and your friend each get a month without ads.</li>
+    </ol>
+
+    <p class="fine">
+      Codes are for people installing ParkSafe for the first time and work for 14 days after
+      installing. See the <a href="/privacy/">Privacy Policy</a> for what referrals store.
+    </p>
+  </article>
+</Base>
+
+<script>
+  // Keep only letters and digits from the link
+  const code = (new URLSearchParams(location.search).get('c') || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 12);
+
+  if (code) {
+    const box = document.querySelector<HTMLElement>('[data-code-box]')!;
+    const button = document.querySelector<HTMLButtonElement>('[data-copy]')!;
+    const copied = document.querySelector<HTMLElement>('[data-copied]')!;
+    const openApp = document.querySelector<HTMLAnchorElement>('[data-open-app]')!;
+
+    button.textContent = code;
+    box.hidden = false;
+    // Same-site links never open the app as a universal link, so this one uses the app's scheme
+    openApp.href = `parksafe://r?c=${code}`;
+    openApp.hidden = false;
+
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(code);
+        copied.textContent = 'Copied';
+      } catch {
+        copied.textContent = '';
+      }
+    });
+  }
+</script>
+
+<style>
+  .invite {
+    text-align: center;
+    padding: 40px 0 24px;
+  }
+
+  .icon {
+    border-radius: 22px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+    margin: 20px 0 8px;
+  }
+
+  .lede {
+    color: var(--text-muted);
+    margin: 0 auto 28px;
+    max-width: 32rem;
+  }
+
+  .code-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 0 auto 24px;
+    max-width: 22rem;
+  }
+
+  .code-box[hidden] {
+    display: none;
+  }
+
+  .label,
+  .copied {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    min-height: 1.2em;
+  }
+
+  .code {
+    font: 700 2rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    background: none;
+    border: 0;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 auto 32px;
+    max-width: 22rem;
+  }
+
+  .button {
+    display: block;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .button[hidden] {
+    display: none;
+  }
+
+  .button.primary {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+  }
+
+  .steps {
+    text-align: left;
+    margin: 0 auto 24px;
+    max-width: 30rem;
+    padding-left: 1.4rem;
+  }
+
+  .steps li + li {
+    margin-top: 8px;
+  }
+
+  .fine {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    max-width: 30rem;
+    margin: 0 auto;
+  }
+</style>

@@ -6,7 +6,7 @@ description: How ParkSafe handles your location, device data and advertising dat
 
 # ParkSafe Privacy Policy
 
-**Last Updated:** May 2026
+**Last Updated:** September 2026
 
 ## Overview
 
@@ -44,6 +44,15 @@ ParkSafe is supported by ads served through Google AdMob. To deliver and measure
 
 You can disable IDFA collection at any time by denying tracking permission when prompted, or by going to iOS Settings → Privacy & Security → Tracking and turning off "Allow Apps to Request to Track" for ParkSafe. Denying tracking does not remove ads, but ads served will be non-personalized.
 
+### Referral Program (Invite Friends)
+
+When a friend installs ParkSafe with your invite code and parks for the first time, you both get a month without ads. To run this, ParkSafe sends Apple's signed record of your ParkSafe download (Apple's "app transaction") to our servers.
+
+- **What:** An identifier Apple assigns to your Apple Account's download of ParkSafe (not your name, email or Apple Account address), the date you first downloaded ParkSafe, your invite code, the friend's code you used and when, whether you have parked since using it (only that it happened, not where), how many friends have used your code, and the date your ad-free time runs until.
+- **When:** Only if you open Invite Friends, use a friend's code, or open an invite link. If you never use invites, nothing is sent.
+- **Why:** To give you and your friends your ad-free months, and to make sure the new-user reward goes only to people installing ParkSafe for the first time.
+- **Storage:** In a database on Amazon Web Services. The friend whose code you used sees only a count of friends who joined, not who you are.
+
 ## Information We Do NOT Collect
 
 - Personal identification information (name, email, phone number)
@@ -69,7 +78,7 @@ We do NOT:
 
 ## Data Storage and Security
 
-- **Server-side:** We do not store any personal or location data on our servers. API requests are processed in real-time and not logged with identifiable information.
+- **Server-side:** Apart from the referral records described above, which are tied to an identifier Apple assigns rather than to your name or contact details, we do not store personal or location data on our servers. API requests are processed in real-time and not logged with identifiable information.
 - **Device-side:** Reminders and preferences are stored locally using iOS secure storage mechanisms.
 - **Transit:** All communication with our servers uses HTTPS encryption.
 
@@ -116,6 +125,8 @@ To delete all locally stored data:
 1. Delete the ParkSafe app from your device
 2. All local data (reminders, preferences) will be permanently removed
 
+If you have used Invite Friends, email [parksafellc@gmail.com](mailto:parksafellc@gmail.com) with the invite code shown on that screen and we will delete your referral records.
+
 ## Children's Privacy
 
 ParkSafe is not directed at children under 13 years of age. We do not knowingly collect any information from children.
@@ -155,6 +166,7 @@ ParkSafe complies with the EU General Data Protection Regulation (GDPR) and the 
 
 - **Location data** (used in-app only, never stored on our servers): legitimate interest in providing the core app functionality.
 - **Crash and diagnostic data:** legitimate interest in maintaining app stability.
+- **Referral data** (only if you use Invite Friends): necessary to provide the referral rewards you chose to take part in.
 - **Advertising data** (IDFA, IP address, ad interaction data shared with AdMob and its partners): your consent, gathered through the Google User Messaging Platform consent message shown on first launch. You can withdraw consent at any time via "Manage Privacy Choices" inside the app, or by purchasing "Remove Ads" to disable advertising entirely.
 
 **Your GDPR rights:**
