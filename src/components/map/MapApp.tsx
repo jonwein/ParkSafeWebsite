@@ -10,7 +10,7 @@ import type { AspCalendar } from '../../lib/restrictions/asp';
 import { nycDateKey } from '../../lib/restrictions/nycTime';
 import type { FeatureCollection, Point } from 'geojson';
 import type { Sign } from '../../lib/restrictions/sign';
-import { NYC_BOUNDS, tileKey, tilesFor, TileStore, type Bounds } from '../../lib/tiles';
+import { isInNyc, NYC_BOUNDS, tileKey, tilesFor, TileStore, type Bounds } from '../../lib/tiles';
 import { AspBanner } from './AspBanner';
 import { FilterPanel } from './FilterPanel';
 import { activeFilterCount, readFilters, toSignFilters, writeFilters, type FilterState } from './filterState';
@@ -26,6 +26,22 @@ const SIGN_MIN_ZOOM = 15;
 const MIDTOWN: [number, number] = [-73.9855, 40.758];
 
 type Area = 'signs' | 'zoomOut' | 'outside';
+type LocationNote = 'outside' | 'denied' | 'unavailable';
+
+const LOCATION_NOTES: Record<LocationNote, string> = {
+  outside: 'Your location is outside New York City, which is all ParkSafe covers.',
+  denied: 'Location is turned off for this site. Allow it in your browser settings, or search an address.',
+  unavailable: "Couldn't find your location. Try again, or search an address.",
+};
+
+/** Whether the browser will share location without asking ('granted'), would ask ('prompt'), or won't */
+async function locationPermission(): Promise<PermissionState> {
+  try {
+    return (await navigator.permissions.query({ name: 'geolocation' })).state;
+  } catch {
+    return 'prompt';
+  }
+}
 
 function boundsOverlapNyc(b: Bounds): boolean {
   return b.west <= NYC_BOUNDS.east && b.east >= NYC_BOUNDS.west && b.south <= NYC_BOUNDS.north && b.north >= NYC_BOUNDS.south;
@@ -49,6 +65,15 @@ export default function MapApp() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
   const [now, setNow] = useState(() => Date.now());
+  const geolocateRef = useRef<GeolocateControl>();
+  const [offerLocation, setOfferLocation] = useState(false);
+  const [locationNote, setLocationNote] = useState<LocationNote>();
+
+  useEffect(() => {
+    if (!locationNote) return;
+    const timer = setTimeout(() => setLocationNote(undefined), 6000);
+    return () => clearTimeout(timer);
+  }, [locationNote]);
 
   // Statuses change by the minute
   useEffect(() => {
@@ -111,6 +136,8 @@ export default function MapApp() {
 
   // Map setup
   useEffect(() => {
+    // A link to a place (#at=zoom/lat/lng) opens there; otherwise the map starts where you are
+    const openedAtPlace = /(^#|&)at=/.test(location.hash);
     const darkQuery = matchMedia('(prefers-color-scheme: dark)');
     const map = new MapLibreMap({
       container: container.current!,
@@ -133,13 +160,42 @@ export default function MapApp() {
     if (import.meta.env.DEV) Object.assign(window, { __parksafeMap: map });
     map.touchZoomRotate.disableRotation();
     map.addControl(new NavigationControl({ showCompass: false }), 'bottom-right');
-    map.addControl(
-      new GeolocateControl({
-        positionOptions: { enableHighAccuracy: true },
-        fitBoundsOptions: { maxZoom: 17 },
-      }),
-      'bottom-right',
-    );
+    const geolocate = new GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      // The dot follows you, for walking back to the car
+      trackUserLocation: true,
+      fitBoundsOptions: { maxZoom: 17 },
+    });
+    geolocateRef.current = geolocate;
+    map.addControl(geolocate, 'bottom-right');
+    // Outside NYC there are no signs to show: stop following and stay on the city
+    const outsideNyc = () => {
+      setLocationNote('outside');
+      setTimeout(() => {
+        geolocate.trigger();
+        map.jumpTo({ center: MIDTOWN, zoom: 16.5 });
+      });
+    };
+    geolocate.on('geolocate', ({ coords }) => {
+      setOfferLocation(false);
+      if (!isInNyc(coords.longitude, coords.latitude)) outsideNyc();
+    });
+    // Beyond the map's bounds the camera doesn't move at all
+    geolocate.on('outofmaxbounds', () => {
+      setOfferLocation(false);
+      outsideNyc();
+    });
+    geolocate.on('error', ({ code }) => {
+      setOfferLocation(false);
+      setLocationNote(code === GeolocationPositionError.PERMISSION_DENIED ? 'denied' : 'unavailable');
+    });
+    map.on('load', () => {
+      if (openedAtPlace) return;
+      locationPermission().then((state) => {
+        if (state === 'granted') geolocate.trigger();
+        else if (state === 'prompt') setOfferLocation(true);
+      });
+    });
 
     map.on('style.load', () => {
       addPoleLayers(map, geojson.current, darkQuery.matches);
@@ -280,7 +336,26 @@ export default function MapApp() {
           )}
         </div>
       </aside>
-      {message ? (
+      {offerLocation && !sheetOpen ? (
+        <button
+          type="button"
+          class="locate-offer"
+          onClick={() => {
+            setOfferLocation(false);
+            geolocateRef.current?.trigger();
+          }}
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path fill="currentColor" d="M21 3 3 10.5l7.2 2.3L12.5 20z" />
+          </svg>
+          Show my location
+        </button>
+      ) : null}
+      {locationNote ? (
+        <div class="map-message" role="status">
+          {LOCATION_NOTES[locationNote]}
+        </div>
+      ) : message ? (
         <div class="map-message" role="status">
           {message}
         </div>
