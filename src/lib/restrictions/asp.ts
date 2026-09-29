@@ -56,9 +56,9 @@ export function formatDateKey(
   return new Date(Date.UTC(year, month - 1, day, 12)).toLocaleDateString('en-US', { ...options, timeZone: 'UTC' });
 }
 
-/** "Labor Day 2026" → "Labor Day" */
+/** "Labor Day 2026" → "Labor Day"; "Day/Indigenous" → "Day / Indigenous" so long names wrap */
 export function holidayName(exceptionName: string | undefined): string | undefined {
-  return exceptionName?.replace(/\s+\d{4}$/, '');
+  return exceptionName?.replace(/\s+\d{4}$/, '').replace(/\s*\/\s*/g, ' / ');
 }
 
 /** The 311 API's MM/DD/YYYY */

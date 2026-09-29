@@ -60,9 +60,11 @@ export default function AspCalendarView({ initialDays }: Props) {
         <p class="muted">No suspensions in the rest of this month or next.</p>
       )}
 
-      {months.map((month) => (
-        <MonthGrid key={month} month={month} calendar={calendar} today={today} />
-      ))}
+      <div class="asp-months">
+        {months.map((month) => (
+          <MonthGrid key={month} month={month} calendar={calendar} today={today} />
+        ))}
+      </div>
     </>
   );
 }

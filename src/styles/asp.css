@@ -57,11 +57,31 @@
   font-weight: 600;
 }
 
+.asp-months {
+  display: grid;
+  gap: 8px 32px;
+}
+
+.asp-months .asp-month h2 {
+  margin: 28px 0 8px;
+}
+
 .asp-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   max-width: 28rem;
+}
+
+/* The source note under the calendar */
+.prose .asp-source {
+  margin-top: 24px;
+}
+
+@media (min-width: 640px) {
+  .asp-months {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .asp-grid-head {
