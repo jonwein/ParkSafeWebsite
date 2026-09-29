@@ -1,0 +1,293 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  parksafeapp.com - static site in a private S3 bucket behind CloudFront, which also forwards
+  the map's data requests (/tiles/*, /asp-calendar) to the production API, plus the role
+  GitHub Actions assumes to publish it. Deploy with infra/deploy.sh (us-east-1).
+
+Parameters:
+  DomainName:
+    Type: String
+    Default: parksafeapp.com
+  CertificateArn:
+    Type: String
+    Description: ACM certificate in us-east-1 covering the domain and www (deploy.sh requests it)
+  GitHubRepo:
+    Type: String
+    Default: jonwein/parksafe-legal
+    Description: owner/name of the repo whose main branch may publish the site
+  WebAclArn:
+    Type: String
+    Default: ''
+    Description: >
+      WAF web ACL attached when the distribution is subscribed to a CloudFront flat-rate plan.
+      deploy.sh passes the current one through so stack updates don't detach it.
+
+  ApiId:
+    Type: String
+    Default: g6g5ew4y5c
+    Description: parksafe-production-api (REST API)
+  ApiStage:
+    Type: String
+    Default: prod
+  ApiKeyParameter:
+    Type: String
+    Default: /parksafe-web/api-key
+    Description: >
+      SSM parameter holding the website's API key (created by Backend/web-api/setup.sh in the
+      ParkSafe repo). CloudFront adds it to forwarded requests; browsers never see it.
+
+Conditions:
+  HasWebAcl: !Not [!Equals [!Ref WebAclArn, '']]
+
+Resources:
+  SiteBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub parksafe-web-site-${AWS::AccountId}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # Only this distribution can read the bucket. ListBucket lets S3 answer 404 (rather than 403)
+  # for missing pages, so CloudFront can serve /404.html for real misses only.
+  SiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: CloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !GetAtt SiteBucket.Arn
+              - !Sub ${SiteBucket.Arn}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}
+
+  SiteOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: parksafe-web-site
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # www.<domain> redirects to the apex; /privacy and /privacy/ both serve privacy/index.html.
+  # scripts/test-viewer-request.mjs runs this code locally.
+  ViewerRequestFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: parksafe-web-viewer-request
+      AutoPublish: true
+      FunctionConfig:
+        Comment: www redirect and directory index rewrite
+        Runtime: cloudfront-js-2.0
+      FunctionCode: |
+        function handler(event) {
+          var request = event.request;
+          var host = request.headers.host ? request.headers.host.value : '';
+
+          if (host.indexOf('www.') === 0) {
+            var query = [];
+            for (var key in request.querystring) {
+              var param = request.querystring[key];
+              var values = param.multiValue ? param.multiValue : [param];
+              for (var i = 0; i < values.length; i++) {
+                query.push(values[i].value === '' ? key : key + '=' + values[i].value);
+              }
+            }
+            return {
+              statusCode: 301,
+              statusDescription: 'Moved Permanently',
+              headers: {
+                location: {
+                  value: 'https://' + host.slice(4) + request.uri + (query.length ? '?' + query.join('&') : '')
+                }
+              }
+            };
+          }
+
+          var uri = request.uri;
+          if (uri.endsWith('/')) {
+            request.uri = uri + 'index.html';
+          } else if (uri.slice(uri.lastIndexOf('/') + 1).indexOf('.') === -1) {
+            request.uri = uri + '/index.html';
+          }
+          return request;
+        }
+
+  # Sign tiles: cached by path alone, so the set of cache keys is the set of NYC tiles. The API
+  # sets s-maxage to the next daily data reload.
+  TilesCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: parksafe-web-tiles
+        MinTTL: 0
+        DefaultTTL: 3600
+        MaxTTL: 86400
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+          HeadersConfig:
+            HeaderBehavior: none
+          CookiesConfig:
+            CookieBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  AspCalendarCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: parksafe-web-asp-calendar
+        MinTTL: 0
+        DefaultTTL: 3600
+        MaxTTL: 21600
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+          HeadersConfig:
+            HeaderBehavior: none
+          CookiesConfig:
+            CookieBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: whitelist
+            QueryStrings:
+              - fromdate
+              - todate
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: parksafeapp.com
+        Enabled: true
+        Aliases:
+          - !Ref DomainName
+          - !Sub www.${DomainName}
+        DefaultRootObject: index.html
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        WebACLId: !If [HasWebAcl, !Ref WebAclArn, !Ref AWS::NoValue]
+        Origins:
+          - Id: site
+            DomainName: !GetAtt SiteBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt SiteOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+          - Id: api
+            DomainName: !Sub ${ApiId}.execute-api.${AWS::Region}.amazonaws.com
+            OriginPath: !Sub /${ApiStage}
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [TLSv1.2]
+            OriginCustomHeaders:
+              - HeaderName: x-api-key
+                HeaderValue: !Sub '{{resolve:ssm:${ApiKeyParameter}}}'
+        DefaultCacheBehavior:
+          TargetOriginId: site
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          # Managed-CachingOptimized: honors the Cache-Control that publish.sh sets per file
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          # Managed-SecurityHeadersPolicy: HSTS, nosniff, frame options, referrer policy
+          ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt ViewerRequestFunction.FunctionMetadata.FunctionARN
+        # The API's paths are the same as the site's, so requests pass through unchanged. No
+        # viewer-request function here: it would rewrite /tiles/16/x/y to an index.html.
+        CacheBehaviors:
+          - PathPattern: /tiles/*
+            TargetOriginId: api
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            CachePolicyId: !Ref TilesCachePolicy
+            ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+          - PathPattern: /asp-calendar
+            TargetOriginId: api
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            CachePolicyId: !Ref AspCalendarCachePolicy
+            ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 404
+            ResponsePagePath: /404.html
+            ErrorCachingMinTTL: 60
+
+  # Assumed by .github/workflows/deploy.yml on pushes to main; can only publish this site.
+  # Uses the account's existing GitHub OIDC provider.
+  DeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: GitHub Actions publishes parksafeapp.com
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepo}:ref:refs/heads/main
+      Policies:
+        - PolicyName: publish-site
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt SiteBucket.Arn
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub ${SiteBucket.Arn}/*
+              - Effect: Allow
+                Action: cloudfront:CreateInvalidation
+                Resource: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}
+
+Outputs:
+  BucketName:
+    Value: !Ref SiteBucket
+  DistributionId:
+    Value: !Ref Distribution
+  DistributionDomainName:
+    Description: Point the domain's DNS records here (CNAME, DNS only)
+    Value: !GetAtt Distribution.DomainName
+  DeployRoleArn:
+    Value: !GetAtt DeployRole.Arn

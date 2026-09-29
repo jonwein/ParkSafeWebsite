@@ -1,6 +1,7 @@
 ---
-layout: default
-title: Terms of Service
+layout: ../layouts/Markdown.astro
+title: Terms of Service · ParkSafe
+description: The terms that govern your use of ParkSafe, the NYC street parking app.
 ---
 
 # ParkSafe Terms of Service
@@ -71,7 +72,3 @@ If any provision of these Terms is found to be unenforceable, the remaining prov
 If you have questions about these Terms of Service, please contact us at:
 
 **Email:** [parksafellc@gmail.com](mailto:parksafellc@gmail.com)
-
----
-
-[Privacy Policy](/privacy/) | [Support](/support/) | [Contact Us](mailto:parksafellc@gmail.com)

@@ -1,0 +1,80 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Full-screen app page: no site header or footer */
+  bare?: boolean;
+}
+
+const { title, description, bare = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+
+const nav = [
+  { href: '/map/', label: 'Map' },
+  { href: '/asp/', label: 'ASP' },
+  { href: '/support/', label: 'Support' },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/icon-512.png', Astro.site)} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body class:list={{ bare }}>
+    {
+      bare ? (
+        <slot />
+      ) : (
+        <>
+          <header class="site-header">
+            <div class="wrap">
+              <a class="brand" href="/">
+                <img src="/favicon.svg" alt="" width="28" height="28" />
+                ParkSafe
+              </a>
+              <nav aria-label="Site">
+                {nav.map(({ href, label }) => (
+                  <a href={href} aria-current={path === href.replace(/\/$/, '') ? 'page' : undefined}>
+                    {label}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </header>
+
+          <main class="wrap">
+            <slot />
+          </main>
+
+          <footer class="site-footer">
+            <div class="wrap">
+              <span>© {new Date().getFullYear()} ParkSafe</span>
+              <span class="footer-links">
+                <a href="/privacy/">Privacy</a>
+                <a href="/terms/">Terms</a>
+                <a href="mailto:parksafellc@gmail.com">parksafellc@gmail.com</a>
+              </span>
+            </div>
+          </footer>
+        </>
+      )
+    }
+  </body>
+</html>
