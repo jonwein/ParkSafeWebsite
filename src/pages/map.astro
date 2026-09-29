@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+import MapApp from '../components/map/MapApp';
+import '../styles/map.css';
+---
+
+<Base
+  title="NYC Parking Sign Map · ParkSafe"
+  description="Every NYC street parking sign on a map, colored by when parking there is next restricted. Search any address, filter by day and time, and check alternate side parking."
+  bare
+>
+  <MapApp client:only="preact" />
+  <noscript>
+    <p class="noscript">The parking sign map needs JavaScript. <a href="/">ParkSafe home</a></p>
+  </noscript>
+</Base>

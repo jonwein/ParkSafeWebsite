@@ -1,0 +1,95 @@
+.asp-card {
+  margin: 20px 0 8px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.asp-card p {
+  margin: 0;
+}
+
+.asp-card-date {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.asp-card-status {
+  margin-top: 2px !important;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.asp-card-reason {
+  font-weight: 600;
+}
+
+.asp-card .muted {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.asp-card-suspended {
+  border-color: #34c759;
+}
+
+.asp-card-inEffect {
+  border-color: #ff9500;
+}
+
+.asp-upcoming {
+  padding: 0;
+  list-style: none;
+}
+
+.asp-upcoming li {
+  display: flex;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.asp-upcoming-date {
+  flex: none;
+  width: 7.5em;
+  font-weight: 600;
+}
+
+.asp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  max-width: 28rem;
+}
+
+.asp-grid-head {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.asp-day {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+
+.asp-day-suspended {
+  background: #34c759;
+  color: #fff;
+  font-weight: 700;
+}
+
+.asp-day-notInEffect {
+  color: var(--text-muted);
+}
+
+.asp-day-today {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}

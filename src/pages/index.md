@@ -10,6 +10,8 @@ description: See every NYC parking sign on a map, save where you parked, and get
 
 ParkSafe is a parking assistance app for New York City. View real-time parking sign data on a map, track where you parked, and get reminders before restrictions start — so you never have to worry about getting a ticket.
 
+<p class="actions"><a class="button" href="/map/">Open the parking sign map</a> <a class="button button-secondary" href="/asp/">Is ASP suspended today?</a></p>
+
 ---
 
 ## Features

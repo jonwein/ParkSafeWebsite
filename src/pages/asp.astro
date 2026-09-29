@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import AspCalendarView from '../components/AspCalendarView';
+import '../styles/asp.css';
+---
+
+<Base
+  title="Is Alternate Side Parking Suspended Today? NYC ASP Calendar · ParkSafe"
+  description="Today's NYC alternate side parking status and every upcoming suspension, from the city's 311 calendar."
+>
+  <article class="prose">
+    <h1>Alternate side parking today</h1>
+    <p class="muted">
+      New York City's alternate side parking (ASP) rules are suspended on legal and religious holidays and sometimes
+      for weather. Street cleaning signs aren't enforced on those days. This page shows the city's 311 calendar.
+    </p>
+    <AspCalendarView client:load />
+    <p class="fine-print">
+      Source: NYC 311. Suspensions can be announced the same day, for snow for example. Meters may still be in effect
+      when ASP is suspended; the day's details say which. <a href="/map/">See the signs on your block</a>.
+    </p>
+  </article>
+</Base>

@@ -6,7 +6,7 @@ description: How ParkSafe handles your location, device data and advertising dat
 
 # ParkSafe Privacy Policy
 
-**Last Updated:** May 2026
+**Last Updated:** September 2026
 
 ## Overview
 
@@ -115,6 +115,15 @@ To delete all locally stored data:
 
 1. Delete the ParkSafe app from your device
 2. All local data (reminders, preferences) will be permanently removed
+
+## ParkSafe Website
+
+This section covers the ParkSafe website (parksafeapp.com), including its parking sign map. The website has no accounts, no advertising and no cookies.
+
+- **Your location:** The map asks for your location only when you tap the locate button. Your browser uses it to center the map; it is not sent to our servers.
+- **Parking sign data:** To show signs, your browser requests sign data for the area of the map you are viewing from our servers on Amazon Web Services. Like any web request, these include your IP address, which Amazon Web Services may process to deliver the site and protect it from abuse. We do not keep records that identify you.
+- **Address search:** Text you type into the search box is sent to NYC GeoSearch, an address search service run by the New York City Department of City Planning. Your recent searches are kept only in your browser's local storage on your device; clearing this site's data in your browser removes them.
+- **Map images:** The base map comes from OpenFreeMap, which receives your IP address with each request for map images. See [OpenFreeMap's privacy policy](https://openfreemap.org/privacy/).
 
 ## Children's Privacy
 

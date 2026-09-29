@@ -1,11 +1,12 @@
-// Checks that every URL the App Store listing, the iOS app and AdMob depend on still works.
+// Checks that every URL the App Store listing, the iOS app and AdMob depend on still works,
+// plus the web app's pages.
 // Usage: npm run check:urls -- https://parksafeapp.com   (defaults to a local `npm run preview`)
 import { readFileSync } from 'node:fs';
 
 const base = (process.argv[2] ?? 'http://localhost:4321').replace(/\/$/, '');
 const appAds = readFileSync(new URL('../public/app-ads.txt', import.meta.url), 'utf8');
 
-const pages = ['/', '/privacy', '/privacy/', '/terms', '/terms/', '/support', '/support/'];
+const pages = ['/', '/privacy', '/privacy/', '/terms', '/terms/', '/support', '/support/', '/map/', '/asp/'];
 let failures = 0;
 
 function report(ok, label, detail) {

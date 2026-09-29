@@ -172,3 +172,33 @@ a {
   padding: 6px 10px;
   text-align: left;
 }
+
+/* Buttons */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.button {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.button-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
