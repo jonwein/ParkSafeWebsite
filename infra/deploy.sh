@@ -11,7 +11,7 @@ set -euo pipefail
 
 STACK_NAME="${STACK_NAME:-parksafe-web}"
 DOMAIN="${DOMAIN:-parksafeapp.com}"
-GITHUB_REPO="${GITHUB_REPO:-jonwein/parksafe-legal}"
+GITHUB_REPO="${GITHUB_REPO:-jonwein/ParkSafeWebsite}"
 REGION=us-east-1  # CloudFront only uses ACM certificates from us-east-1
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
