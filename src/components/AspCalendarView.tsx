@@ -14,15 +14,22 @@ function headline(day: AspDay | undefined, calendar: AspCalendar, today: string)
   return day.status === 'notInEffect' ? 'Not in effect today' : 'In effect today';
 }
 
-export default function AspCalendarView() {
-  const [calendar, setCalendar] = useState<AspCalendar>();
+interface Props {
+  /** The calendar as of the build, so the page's HTML already has today's status; refreshed on load */
+  initialDays?: AspDay[];
+}
+
+export default function AspCalendarView({ initialDays }: Props) {
+  const [calendar, setCalendar] = useState<AspCalendar | undefined>(() =>
+    initialDays?.length ? new Map(initialDays.map((day) => [day.date, day])) : undefined,
+  );
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     loadAspCalendar().then(setCalendar, () => setFailed(true));
   }, []);
 
-  if (failed) return <p class="asp-card">The calendar couldn’t be loaded. Try again in a minute.</p>;
+  if (failed && !calendar) return <p class="asp-card">The calendar couldn’t be loaded. Try again in a minute.</p>;
   if (!calendar) return <p class="asp-card muted">Loading today’s status…</p>;
 
   const today = nycDateKey(Date.now());
@@ -53,9 +60,11 @@ export default function AspCalendarView() {
         <p class="muted">No suspensions in the rest of this month or next.</p>
       )}
 
-      {months.map((month) => (
-        <MonthGrid key={month} month={month} calendar={calendar} today={today} />
-      ))}
+      <div class="asp-months">
+        {months.map((month) => (
+          <MonthGrid key={month} month={month} calendar={calendar} today={today} />
+        ))}
+      </div>
     </>
   );
 }

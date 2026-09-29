@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Nightly, just after midnight in New York, so /asp carries the new day's status and the home
+  # page the current App Store rating
+  schedule:
+    - cron: '10 5 * * *'
 
 permissions:
   contents: read

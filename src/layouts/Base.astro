@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { APP_STORE_ID } from '../lib/app';
 
 interface Props {
   title: string;
@@ -8,10 +9,13 @@ interface Props {
   bare?: boolean;
   /** Keep the page out of search results (invite links) */
   noindex?: boolean;
+  /** schema.org JSON-LD for the page */
+  structuredData?: object;
 }
 
-const { title, description, bare = false, noindex = false } = Astro.props;
+const { title, description, bare = false, noindex = false, structuredData } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const shareImage = new URL('/og.jpg', Astro.site);
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 
 const nav = [
@@ -34,11 +38,20 @@ const nav = [
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)" />
+    <!-- Safari on iPhone offers the app in a banner at the top -->
+    <meta name="apple-itunes-app" content={`app-id=${APP_STORE_ID}`} />
+    <meta property="og:site_name" content="ParkSafe" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={new URL('/icon-512.png', Astro.site)} />
+    <meta property="og:image" content={shareImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ParkSafe: every NYC parking sign on a map" />
     <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {structuredData && <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />}
+    <slot name="head" />
   </head>
   <body class:list={{ bare }}>
     {

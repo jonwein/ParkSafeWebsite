@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import preact from '@astrojs/preact';
+import sitemap from '@astrojs/sitemap';
 import { loadEnv } from 'vite';
 import { devApi } from './scripts/dev-api.mjs';
 
@@ -13,7 +14,11 @@ export default defineConfig({
   build: {
     format: 'directory',
   },
-  integrations: [preact()],
+  integrations: [
+    preact(),
+    // Leaves out /r (invite links, noindex) and the 404 page
+    sitemap({ filter: (page) => !/\/(r|404)\/?$/.test(new URL(page).pathname) }),
+  ],
   vite: {
     plugins: [devApi(env)],
     worker: { format: 'es' },

@@ -30,6 +30,13 @@ const aasa = await fetch(`${base}/.well-known/apple-app-site-association`);
 const appIDs = aasa.status === 200 ? (await aasa.json().catch(() => ({})))?.applinks?.details?.[0]?.appIDs : undefined;
 report(Array.isArray(appIDs) && appIDs.length > 0, '/.well-known/apple-app-site-association', `${aasa.status}, appIDs: ${appIDs ?? 'none'}`);
 
+const robots = await fetch(`${base}/robots.txt`);
+const robotsBody = await robots.text();
+report(robots.status === 200 && robotsBody.includes('Sitemap:'), '/robots.txt', `${robots.status}`);
+
+const sitemap = await fetch(`${base}/sitemap-index.xml`);
+report(sitemap.status === 200 && (await sitemap.text()).includes('<sitemapindex'), '/sitemap-index.xml', `${sitemap.status}`);
+
 const missing = await fetch(`${base}/no-such-page`);
 report(missing.status === 404, '/no-such-page', `${missing.status}`);
 
