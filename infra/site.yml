@@ -92,6 +92,7 @@ Resources:
         SigningProtocol: sigv4
 
   # www.<domain> redirects to the apex; /privacy and /privacy/ both serve privacy/index.html.
+  # /.well-known/ files are served as they are: apple-app-site-association has no extension.
   # scripts/test-viewer-request.mjs runs this code locally.
   ViewerRequestFunction:
     Type: AWS::CloudFront::Function
@@ -127,6 +128,9 @@ Resources:
           }
 
           var uri = request.uri;
+          if (uri.indexOf('/.well-known/') === 0) {
+            return request;
+          }
           if (uri.endsWith('/')) {
             request.uri = uri + 'index.html';
           } else if (uri.slice(uri.lastIndexOf('/') + 1).indexOf('.') === -1) {

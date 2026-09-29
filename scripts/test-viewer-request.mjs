@@ -29,6 +29,9 @@ const rewrites = [
   ['/app-ads.txt', '/app-ads.txt'],
   ['/404.html', '/404.html'],
   ['/_astro/page.A1b2C3.css', '/_astro/page.A1b2C3.css'],
+  ['/r', '/r/index.html'],
+  // Apple reads this to verify invite links; it has no extension but is a file, not a page
+  ['/.well-known/apple-app-site-association', '/.well-known/apple-app-site-association'],
 ];
 for (const [uri, expected] of rewrites) {
   assert.equal(handler(request('parksafeapp.com', uri)).uri, expected, uri);

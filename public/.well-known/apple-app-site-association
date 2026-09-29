@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["9S7P8G455A.com.parksafeapp.parksafe"],
+        "components": [
+          { "/": "/r", "?": { "c": "?*" }, "comment": "Referral invites: /r?c=CODE" },
+          { "/": "/r/", "?": { "c": "?*" }, "comment": "The same with a trailing slash" }
+        ]
+      }
+    ]
+  }
+}
