@@ -135,47 +135,6 @@ Resources:
           return request;
         }
 
-  # Sign tiles: cached by path alone, so the set of cache keys is the set of NYC tiles. The API
-  # sets s-maxage to the next daily data reload.
-  TilesCachePolicy:
-    Type: AWS::CloudFront::CachePolicy
-    Properties:
-      CachePolicyConfig:
-        Name: parksafe-web-tiles
-        MinTTL: 0
-        DefaultTTL: 3600
-        MaxTTL: 86400
-        ParametersInCacheKeyAndForwardedToOrigin:
-          EnableAcceptEncodingGzip: true
-          EnableAcceptEncodingBrotli: true
-          HeadersConfig:
-            HeaderBehavior: none
-          CookiesConfig:
-            CookieBehavior: none
-          QueryStringsConfig:
-            QueryStringBehavior: none
-
-  AspCalendarCachePolicy:
-    Type: AWS::CloudFront::CachePolicy
-    Properties:
-      CachePolicyConfig:
-        Name: parksafe-web-asp-calendar
-        MinTTL: 0
-        DefaultTTL: 3600
-        MaxTTL: 21600
-        ParametersInCacheKeyAndForwardedToOrigin:
-          EnableAcceptEncodingGzip: true
-          EnableAcceptEncodingBrotli: true
-          HeadersConfig:
-            HeaderBehavior: none
-          CookiesConfig:
-            CookieBehavior: none
-          QueryStringsConfig:
-            QueryStringBehavior: whitelist
-            QueryStrings:
-              - fromdate
-              - todate
-
   Distribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -225,21 +184,29 @@ Resources:
         # The API's paths are the same as the site's, so requests pass through unchanged. No
         # viewer-request function here: it would rewrite /tiles/16/x/y to an index.html.
         CacheBehaviors:
+          # Managed policies only: CloudFront's Free and Pro flat-rate plans don't allow custom ones.
+          # Tiles: Managed-CachingOptimized caches by path alone, so the cache keys are the NYC
+          # tiles, and follows the API's s-maxage (the next daily data reload).
           - PathPattern: /tiles/*
             TargetOriginId: api
             ViewerProtocolPolicy: redirect-to-https
             AllowedMethods: [GET, HEAD]
             CachedMethods: [GET, HEAD]
             Compress: true
-            CachePolicyId: !Ref TilesCachePolicy
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
             ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+          # ASP calendar: needs its query string, and the managed policies that cache by query
+          # string also send the Host header, which API Gateway rejects. So it isn't cached here:
+          # Managed-CachingDisabled, with Managed-AllViewerExceptHostHeader passing the query
+          # string on. The nyc-asp-calendar Lambda caches the city's calendar itself.
           - PathPattern: /asp-calendar
             TargetOriginId: api
             ViewerProtocolPolicy: redirect-to-https
             AllowedMethods: [GET, HEAD]
             CachedMethods: [GET, HEAD]
             Compress: true
-            CachePolicyId: !Ref AspCalendarCachePolicy
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
             ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
         CustomErrorResponses:
           - ErrorCode: 404
