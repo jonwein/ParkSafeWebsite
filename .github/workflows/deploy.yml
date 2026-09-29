@@ -19,7 +19,9 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm test
       - run: npm run test:edge
+      - run: npm run check
       - run: npm run build
       - name: Check URLs against the build
         run: |

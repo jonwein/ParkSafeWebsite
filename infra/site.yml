@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  parksafeapp.com - static site in a private S3 bucket behind CloudFront, plus the role
+  parksafeapp.com - static site in a private S3 bucket behind CloudFront, which also forwards
+  the map's data requests (/tiles/*, /asp-calendar) to the production API, plus the role
   GitHub Actions assumes to publish it. Deploy with infra/deploy.sh (us-east-1).
 
 Parameters:
@@ -20,6 +21,20 @@ Parameters:
     Description: >
       WAF web ACL attached when the distribution is subscribed to a CloudFront flat-rate plan.
       deploy.sh passes the current one through so stack updates don't detach it.
+
+  ApiId:
+    Type: String
+    Default: g6g5ew4y5c
+    Description: parksafe-production-api (REST API)
+  ApiStage:
+    Type: String
+    Default: prod
+  ApiKeyParameter:
+    Type: String
+    Default: /parksafe-web/api-key
+    Description: >
+      SSM parameter holding the website's API key (created by Backend/web-api/setup.sh in the
+      ParkSafe repo). CloudFront adds it to forwarded requests; browsers never see it.
 
 Conditions:
   HasWebAcl: !Not [!Equals [!Ref WebAclArn, '']]
@@ -120,6 +135,47 @@ Resources:
           return request;
         }
 
+  # Sign tiles: cached by path alone, so the set of cache keys is the set of NYC tiles. The API
+  # sets s-maxage to the next daily data reload.
+  TilesCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: parksafe-web-tiles
+        MinTTL: 0
+        DefaultTTL: 3600
+        MaxTTL: 86400
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+          HeadersConfig:
+            HeaderBehavior: none
+          CookiesConfig:
+            CookieBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: none
+
+  AspCalendarCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: parksafe-web-asp-calendar
+        MinTTL: 0
+        DefaultTTL: 3600
+        MaxTTL: 21600
+        ParametersInCacheKeyAndForwardedToOrigin:
+          EnableAcceptEncodingGzip: true
+          EnableAcceptEncodingBrotli: true
+          HeadersConfig:
+            HeaderBehavior: none
+          CookiesConfig:
+            CookieBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: whitelist
+            QueryStrings:
+              - fromdate
+              - todate
+
   Distribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -144,6 +200,15 @@ Resources:
             OriginAccessControlId: !GetAtt SiteOriginAccessControl.Id
             S3OriginConfig:
               OriginAccessIdentity: ''
+          - Id: api
+            DomainName: !Sub ${ApiId}.execute-api.${AWS::Region}.amazonaws.com
+            OriginPath: !Sub /${ApiStage}
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: [TLSv1.2]
+            OriginCustomHeaders:
+              - HeaderName: x-api-key
+                HeaderValue: !Sub '{{resolve:ssm:${ApiKeyParameter}}}'
         DefaultCacheBehavior:
           TargetOriginId: site
           ViewerProtocolPolicy: redirect-to-https
@@ -157,6 +222,25 @@ Resources:
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt ViewerRequestFunction.FunctionMetadata.FunctionARN
+        # The API's paths are the same as the site's, so requests pass through unchanged. No
+        # viewer-request function here: it would rewrite /tiles/16/x/y to an index.html.
+        CacheBehaviors:
+          - PathPattern: /tiles/*
+            TargetOriginId: api
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            CachePolicyId: !Ref TilesCachePolicy
+            ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
+          - PathPattern: /asp-calendar
+            TargetOriginId: api
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            Compress: true
+            CachePolicyId: !Ref AspCalendarCachePolicy
+            ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03
         CustomErrorResponses:
           - ErrorCode: 404
             ResponseCode: 404

@@ -1,0 +1,547 @@
+/* Full-screen map page. Phones: floating search bar and a bottom sheet over the map.
+   768px and wider: a fixed side panel next to the map. */
+
+:root {
+  --side-width: 380px;
+  --shadow: 0 2px 12px rgb(0 0 0 / 0.16);
+  --radius: 12px;
+  --red: #ff3b30;
+  --orange: #ff9500;
+  --green: #34c759;
+  --gray: #8e8e93;
+  --good-bg: #e8f7ec;
+  --good-text: #1d7a3a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shadow: 0 2px 12px rgb(0 0 0 / 0.5);
+    --good-bg: #16301f;
+    --good-text: #6fd08f;
+  }
+}
+
+body.bare {
+  display: block;
+  min-height: 0;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.map-app {
+  position: fixed;
+  inset: 0;
+}
+
+/* More specific than MapLibre's own .maplibregl-map { position: relative } */
+.map-app .map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* Panel */
+
+.map-side {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.map-side > * {
+  pointer-events: auto;
+}
+
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px var(--gutter) 0;
+  padding: 6px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.map-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.map-brand span {
+  display: none;
+}
+
+.filter-button {
+  flex: none;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.filter-button[aria-expanded='true'] {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* Search */
+
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; /* 16px keeps iOS Safari from zooming in on focus */
+}
+
+.search input:focus {
+  outline: 2px solid var(--brand);
+  outline-offset: -1px;
+}
+
+.search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  max-height: 50dvh;
+  overflow-y: auto;
+  z-index: 3;
+}
+
+.search-results li {
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.search-results li[aria-selected='true'],
+.search-results li[role='option']:hover {
+  background: var(--surface);
+}
+
+.search-results .search-heading,
+.search-results .search-empty {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: default;
+}
+
+/* ASP */
+
+.asp-banner {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px var(--gutter) 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.asp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+
+.asp-suspended .asp-dot,
+.asp-notInEffect .asp-dot {
+  background: var(--green);
+}
+
+/* Sheet */
+
+.map-sheet {
+  display: none;
+  margin-top: auto;
+  max-height: 55dvh;
+  overflow-y: auto;
+  padding: 4px var(--gutter) calc(16px + env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-radius: 16px 16px 0 0;
+  box-shadow: var(--shadow);
+}
+
+.map-sheet[data-open] {
+  display: block;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.panel-head p {
+  margin: 2px 0 0;
+}
+
+.icon-button {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.fine-print {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 12px 0 0;
+}
+
+/* Sign details */
+
+.sign-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sign-card {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.sign-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sign-card-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.tag {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.dot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot-red { background: var(--red); }
+.dot-orange { background: var(--orange); }
+.dot-green { background: var(--green); }
+.dot-gray { background: var(--gray); }
+
+.status {
+  margin: 4px 0 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.status-red { color: var(--red); }
+.status-orange { color: #c46e00; }
+.status-green { color: var(--good-text); }
+.status-gray { color: var(--text-muted); }
+
+@media (prefers-color-scheme: dark) {
+  .status-orange { color: var(--orange); }
+}
+
+.windows {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.95rem;
+}
+
+.note {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.note-good {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--good-bg);
+  color: var(--good-text);
+}
+
+.sign-text {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+}
+
+/* Filters */
+
+.filters fieldset {
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.filters legend {
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip,
+.segmented button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'],
+.segmented button[aria-pressed='true'] {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+}
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.time-range {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.time-range label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.time-range select {
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.text-button,
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font: inherit;
+  cursor: pointer;
+}
+
+.text-button {
+  margin-top: 16px;
+  font-size: 0.9rem;
+}
+
+.link-button {
+  text-decoration: underline;
+}
+
+/* Intro and legend (side panel only) */
+
+.intro h1 {
+  margin: 16px 0 4px;
+  font-size: 1.3rem;
+}
+
+.legend {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+/* Status message over the map */
+
+.map-message {
+  position: absolute;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1;
+  max-width: calc(100% - 2 * var(--gutter));
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--bg);
+  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.map-message-quiet {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.noscript {
+  padding: var(--gutter);
+}
+
+/* MapLibre controls follow the page theme (.map-app outranks MapLibre's own rules) */
+
+@media (prefers-color-scheme: dark) {
+  .map-app .maplibregl-ctrl-group {
+    background: var(--surface);
+  }
+  .map-app .maplibregl-ctrl-group button + button {
+    border-top-color: var(--border);
+  }
+  .map-app .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    filter: invert(1);
+  }
+  .map-app .maplibregl-ctrl-attrib {
+    background: rgb(15 17 21 / 0.8);
+    color: var(--text-muted);
+  }
+  .map-app .maplibregl-ctrl-attrib a {
+    color: var(--text-muted);
+  }
+}
+
+@media (min-width: 768px) {
+  .map-app .map-canvas {
+    left: var(--side-width);
+  }
+
+  .map-side {
+    right: auto;
+    width: var(--side-width);
+    display: block;
+    overflow-y: auto;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    pointer-events: auto;
+  }
+
+  .map-toolbar {
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 12px var(--gutter);
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .map-brand {
+    flex-basis: 100%;
+  }
+
+  .map-brand span {
+    display: inline;
+  }
+
+  .asp-banner {
+    display: flex;
+    margin: 12px var(--gutter) 0;
+    box-shadow: none;
+    background: var(--surface);
+  }
+
+  .map-sheet {
+    display: block;
+    max-height: none;
+    overflow: visible;
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+  }
+
+  .map-message {
+    top: 16px;
+    left: calc(var(--side-width) + (100% - var(--side-width)) / 2);
+  }
+}
