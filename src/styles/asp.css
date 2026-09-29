@@ -93,3 +93,20 @@
   outline: 2px solid var(--brand);
   outline-offset: 1px;
 }
+
+.asp-download {
+  margin: 32px 0 8px;
+  padding: 24px 20px;
+  border-radius: 16px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.asp-download h2 {
+  margin: 0 0 6px !important;
+}
+
+.asp-download p {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+}

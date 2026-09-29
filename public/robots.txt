@@ -1,0 +1,6 @@
+User-agent: *
+# The map's data requests: an open-ended set of URLs with nothing to index
+Disallow: /tiles/
+Disallow: /asp-calendar
+
+Sitemap: https://parksafeapp.com/sitemap-index.xml

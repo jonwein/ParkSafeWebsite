@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { loadAspCalendar } from '../../lib/aspClient';
+import { APP_STORE_URL } from '../../lib/app';
 import type { Place } from '../../lib/geosearch';
 import type { AspCalendar } from '../../lib/restrictions/asp';
 import { nycDateKey } from '../../lib/restrictions/nycTime';
@@ -391,6 +392,15 @@ function Intro() {
         Always read the posted signs. Sign data from NYC DOT, updated daily. Street cleaning is shown as clear on days
         alternate side parking is suspended.
       </p>
+      <div class="intro-app">
+        <p>Save where you parked and get reminded before you have to move, with the free iPhone app.</p>
+        <a class="app-store-badge" href={APP_STORE_URL}>
+          <picture>
+            <source srcset="/badges/app-store-white.svg" media="(prefers-color-scheme: dark)" />
+            <img src="/badges/app-store-black.svg" alt="Download ParkSafe on the App Store" width="168" height="56" />
+          </picture>
+        </a>
+      </div>
     </section>
   );
 }

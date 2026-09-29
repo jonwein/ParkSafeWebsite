@@ -3,8 +3,7 @@
 // straight to its invite screen (see public/.well-known/apple-app-site-association); everyone
 // else lands here. The code comes from the query string, so this one static page serves them all.
 import Base from '../layouts/Base.astro';
-
-const appStoreURL = 'https://apps.apple.com/app/id6758868188';
+import { APP_STORE_URL as appStoreURL } from '../lib/app';
 ---
 
 <Base

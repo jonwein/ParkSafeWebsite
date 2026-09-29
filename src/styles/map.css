@@ -445,6 +445,24 @@ body.bare {
   padding: 4px 0;
 }
 
+.intro-app {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.intro-app p {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+}
+
+.intro-app img {
+  display: block;
+  height: 56px;
+  width: auto;
+}
+
 /* Status message over the map */
 
 .map-message {

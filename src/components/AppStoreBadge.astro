@@ -1,0 +1,32 @@
+---
+// Apple's official "Download on the App Store" badge (black, or white in dark mode), linking to
+// the app. Apple's guidelines: use the artwork unaltered, at least 40px tall.
+import { APP_STORE_URL } from '../lib/app';
+
+interface Props {
+  /** Badge height in CSS pixels */
+  height?: number;
+}
+
+const { height = 64 } = Astro.props;
+const width = Math.round((height * 119.66407) / 40);
+---
+
+<a class="app-store-badge" href={APP_STORE_URL} style={`--badge-height: ${height}px`}>
+  <picture>
+    <source srcset="/badges/app-store-white.svg" media="(prefers-color-scheme: dark)" />
+    <img src="/badges/app-store-black.svg" alt="Download ParkSafe on the App Store" width={width} height={height} />
+  </picture>
+</a>
+
+<style>
+  .app-store-badge {
+    display: inline-block;
+    line-height: 0;
+  }
+
+  .app-store-badge img {
+    height: var(--badge-height);
+    width: auto;
+  }
+</style>

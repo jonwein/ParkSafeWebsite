@@ -25,6 +25,13 @@ const ads = await fetch(`${base}/app-ads.txt`);
 const adsBody = await ads.text();
 report(ads.status === 200 && adsBody === appAds, '/app-ads.txt', `${ads.status}, ${adsBody === appAds ? 'matches' : 'differs from'} public/app-ads.txt`);
 
+const robots = await fetch(`${base}/robots.txt`);
+const robotsBody = await robots.text();
+report(robots.status === 200 && robotsBody.includes('Sitemap:'), '/robots.txt', `${robots.status}`);
+
+const sitemap = await fetch(`${base}/sitemap-index.xml`);
+report(sitemap.status === 200 && (await sitemap.text()).includes('<sitemapindex'), '/sitemap-index.xml', `${sitemap.status}`);
+
 const missing = await fetch(`${base}/no-such-page`);
 report(missing.status === 404, '/no-such-page', `${missing.status}`);
 
