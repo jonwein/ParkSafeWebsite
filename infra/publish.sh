@@ -25,6 +25,14 @@ if [ ! -f "$DIST_DIR/index.html" ]; then
     exit 1
 fi
 
+# The app's invite links need this file. A build that lost it (GitHub's artifact upload drops
+# hidden folders unless told not to) would publish without it and quietly break them.
+AASA=".well-known/apple-app-site-association"
+if [ ! -f "$DIST_DIR/$AASA" ]; then
+    echo "$DIST_DIR/$AASA is missing; invite links would stop opening the app." >&2
+    exit 1
+fi
+
 # Fingerprinted assets never change, so browsers keep them for a year. Old ones are left in
 # place for pages still open on the previous build.
 if [ -d "$DIST_DIR/_astro" ]; then
@@ -40,12 +48,9 @@ aws s3 sync "$DIST_DIR" "s3://$SITE_BUCKET" \
     --cache-control "public,max-age=0,s-maxage=86400"
 
 # Apple fetches this to verify the app's invite links. It has no extension, so name its type.
-AASA=".well-known/apple-app-site-association"
-if [ -f "$DIST_DIR/$AASA" ]; then
-    aws s3 cp "$DIST_DIR/$AASA" "s3://$SITE_BUCKET/$AASA" \
-        --content-type application/json \
-        --cache-control "public,max-age=0,s-maxage=86400"
-fi
+aws s3 cp "$DIST_DIR/$AASA" "s3://$SITE_BUCKET/$AASA" \
+    --content-type application/json \
+    --cache-control "public,max-age=0,s-maxage=86400"
 
 INVALIDATION_ID="$(aws cloudfront create-invalidation \
     --distribution-id "$DISTRIBUTION_ID" \
