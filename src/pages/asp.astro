@@ -40,7 +40,7 @@ const faqs = [
   {
     question: 'What is alternate side parking?',
     answer:
-      "Alternate side parking (ASP) rules clear one side of a street at set times so it can be swept. They're the street cleaning signs with a broom symbol, like \"No Parking 8:30AM-10AM Mon Thu\".",
+      "Alternate side parking (ASP) rules clear one side of a street at set times so it can be swept. They're the street cleaning signs with a broom symbol, which list the days and hours the street is swept.",
   },
   {
     question: 'When is alternate side parking suspended?',
@@ -82,7 +82,7 @@ const structuredData = {
       for weather. Street cleaning signs aren't enforced on those days. This page shows the city's 311 calendar.
     </p>
     <AspCalendarView client:load initialDays={calendar ? [...calendar.values()] : undefined} />
-    <p class="fine-print">
+    <p class="fine-print asp-source">
       Source: NYC 311. Suspensions can be announced the same day, for snow for example. Meters may still be in effect
       when ASP is suspended; the day's details say which. <a href="/map/">See the signs on your block</a>.
     </p>

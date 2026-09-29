@@ -202,3 +202,16 @@ a {
   flex-wrap: wrap;
   gap: 16px;
 }
+
+/* Secondary text, used across pages */
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.fine-print {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin: 12px 0 0;
+}
