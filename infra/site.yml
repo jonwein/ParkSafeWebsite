@@ -13,7 +13,7 @@ Parameters:
     Description: ACM certificate in us-east-1 covering the domain and www (deploy.sh requests it)
   GitHubRepo:
     Type: String
-    Default: jonwein/parksafe-legal
+    Default: jonwein/ParkSafeWebsite
     Description: owner/name of the repo whose main branch may publish the site
   WebAclArn:
     Type: String
