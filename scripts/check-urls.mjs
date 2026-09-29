@@ -25,6 +25,11 @@ const ads = await fetch(`${base}/app-ads.txt`);
 const adsBody = await ads.text();
 report(ads.status === 200 && adsBody === appAds, '/app-ads.txt', `${ads.status}, ${adsBody === appAds ? 'matches' : 'differs from'} public/app-ads.txt`);
 
+// Apple reads this to let the app open invite links (parksafeapp.com/r?c=CODE)
+const aasa = await fetch(`${base}/.well-known/apple-app-site-association`);
+const appIDs = aasa.status === 200 ? (await aasa.json().catch(() => ({})))?.applinks?.details?.[0]?.appIDs : undefined;
+report(Array.isArray(appIDs) && appIDs.length > 0, '/.well-known/apple-app-site-association', `${aasa.status}, appIDs: ${appIDs ?? 'none'}`);
+
 const missing = await fetch(`${base}/no-such-page`);
 report(missing.status === 404, '/no-such-page', `${missing.status}`);
 

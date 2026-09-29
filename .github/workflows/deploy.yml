@@ -32,6 +32,8 @@ jobs:
         with:
           name: site
           path: dist/
+          # Keeps dist/.well-known/apple-app-site-association, which the app's invite links need
+          include-hidden-files: true
           retention-days: 7
 
   # Publishes main to parksafeapp.com. Skipped until infra/deploy.sh has run and the three
