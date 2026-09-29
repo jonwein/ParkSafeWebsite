@@ -1,23 +1,109 @@
 ---
-import Base from '../layouts/Base.astro';
+import AppStoreBadge from '../components/AppStoreBadge.astro';
 import AspCalendarView from '../components/AspCalendarView';
+import Base from '../layouts/Base.astro';
+import { loadAspCalendar } from '../lib/aspClient';
+import { formatDateKey, holidayName, type AspCalendar } from '../lib/restrictions/asp';
+import { nycDateKey } from '../lib/restrictions/nycTime';
 import '../styles/asp.css';
+
+// Built nightly (see .github/workflows/deploy.yml), so the HTML carries today's status for search
+// engines and link previews. The page refreshes it from /asp-calendar when it loads.
+let calendar: AspCalendar | undefined;
+try {
+  calendar = await loadAspCalendar(Date.now(), Astro.site!.origin);
+} catch {
+  calendar = undefined;
+}
+
+const today = nycDateKey(Date.now());
+const todayEntry = calendar?.get(today);
+const nextSuspension = calendar && [...calendar.values()].find((d) => d.status === 'suspended' && d.date > today);
+const todayLabel = formatDateKey(today, { weekday: 'long', month: 'long', day: 'numeric' });
+
+let description =
+  "Today's NYC alternate side parking status and every upcoming suspension, from the city's 311 calendar.";
+if (todayEntry) {
+  const status =
+    todayEntry.status === 'suspended'
+      ? `alternate side parking is suspended${todayEntry.exceptionName ? ` for ${holidayName(todayEntry.exceptionName)}` : ''}`
+      : todayEntry.status === 'notInEffect'
+        ? 'alternate side parking is not in effect'
+        : 'alternate side parking is in effect';
+  const next = nextSuspension
+    ? ` Next suspension: ${formatDateKey(nextSuspension.date)}${nextSuspension.exceptionName ? ` (${holidayName(nextSuspension.exceptionName)})` : ''}.`
+    : '';
+  description = `${todayLabel}: ${status} in NYC.${next} See the full calendar of suspensions.`;
+}
+
+const faqs = [
+  {
+    question: 'What is alternate side parking?',
+    answer:
+      "Alternate side parking (ASP) rules clear one side of a street at set times so it can be swept. They're the street cleaning signs with a broom symbol, like \"No Parking 8:30AM-10AM Mon Thu\".",
+  },
+  {
+    question: 'When is alternate side parking suspended?',
+    answer:
+      "On the legal and religious holidays listed on the city's ASP calendar, and sometimes for snow or other emergencies, which the city can announce the same day. The calendar above comes from NYC 311 and updates daily.",
+  },
+  {
+    question: 'Are parking meters in effect when ASP is suspended?',
+    answer:
+      "It depends on the day. On major legal holidays both ASP and meters are suspended; on other holidays only ASP is, and meters stay in effect. Each day's details above say which.",
+  },
+  {
+    question: 'Do other parking rules still apply on suspension days?',
+    answer:
+      'Yes. Only the street cleaning rules are suspended. No Standing, No Stopping, No Parking and every other posted rule stays in effect.',
+  },
+];
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map(({ question, answer }) => ({
+    '@type': 'Question',
+    name: question,
+    acceptedAnswer: { '@type': 'Answer', text: answer },
+  })),
+};
 ---
 
 <Base
   title="Is Alternate Side Parking Suspended Today? NYC ASP Calendar · ParkSafe"
-  description="Today's NYC alternate side parking status and every upcoming suspension, from the city's 311 calendar."
+  description={description}
+  structuredData={structuredData}
 >
   <article class="prose">
-    <h1>Alternate side parking today</h1>
+    <h1>Is alternate side parking suspended today?</h1>
     <p class="muted">
       New York City's alternate side parking (ASP) rules are suspended on legal and religious holidays and sometimes
       for weather. Street cleaning signs aren't enforced on those days. This page shows the city's 311 calendar.
     </p>
-    <AspCalendarView client:load />
+    <AspCalendarView client:load initialDays={calendar ? [...calendar.values()] : undefined} />
     <p class="fine-print">
       Source: NYC 311. Suspensions can be announced the same day, for snow for example. Meters may still be in effect
       when ASP is suspended; the day's details say which. <a href="/map/">See the signs on your block</a>.
     </p>
+
+    <section class="asp-download">
+      <h2>Get ASP alerts on your iPhone</h2>
+      <p>
+        ParkSafe reminds you before street cleaning starts where you parked, skips suspended days, and shows the week's
+        suspensions at a glance.
+      </p>
+      <AppStoreBadge height={64} />
+    </section>
+
+    <h2>About alternate side parking</h2>
+    {
+      faqs.map(({ question, answer }) => (
+        <>
+          <h3>{question}</h3>
+          <p>{answer}</p>
+        </>
+      ))
+    }
   </article>
 </Base>

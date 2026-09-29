@@ -2,13 +2,27 @@
 import Base from '../layouts/Base.astro';
 import MapApp from '../components/map/MapApp';
 import '../styles/map.css';
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'ParkSafe NYC Parking Sign Map',
+  url: new URL('/map/', Astro.site).href,
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Any (web browser)',
+  description:
+    'Every NYC street parking sign on a map, colored by when parking there is next restricted, with alternate side parking suspensions applied.',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+};
 ---
 
 <Base
-  title="NYC Parking Sign Map · ParkSafe"
+  title="NYC Parking Sign Map: Every Street Parking Rule · ParkSafe"
   description="Every NYC street parking sign on a map, colored by when parking there is next restricted. Search any address, filter by day and time, and check alternate side parking."
+  structuredData={structuredData}
   bare
 >
+  <link slot="head" rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
   <MapApp client:only="preact" />
   <noscript>
     <p class="noscript">The parking sign map needs JavaScript. <a href="/">ParkSafe home</a></p>

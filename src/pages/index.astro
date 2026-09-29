@@ -1,0 +1,263 @@
+---
+import { Image } from 'astro:assets';
+import AppStoreBadge from '../components/AppStoreBadge.astro';
+import Base from '../layouts/Base.astro';
+import { APP_NAME, APP_STORE_URL, fetchAppStoreRating } from '../lib/app';
+import screenshot from '../assets/app-map-screenshot.png';
+
+const site = Astro.site!.href;
+const rating = await fetchAppStoreRating();
+
+const faqs = [
+  {
+    question: 'Is ParkSafe free?',
+    answer:
+      'Yes. The iPhone app is free to download and supported by ads, which you can remove with an in-app purchase. The parking sign map on this website is free, with no ads.',
+  },
+  {
+    question: 'Where does the parking sign data come from?',
+    answer:
+      "From the NYC Department of Transportation's parking regulation data on NYC Open Data, which ParkSafe loads every day. Each sign's own wording is shown next to how ParkSafe reads it.",
+  },
+  {
+    question: 'Does ParkSafe know about alternate side parking suspensions?',
+    answer:
+      "Yes. It follows the city's ASP calendar, so street cleaning signs show as clear on days alternate side parking is suspended, and the app can remind you about upcoming suspensions.",
+  },
+  {
+    question: 'Does ParkSafe work outside New York City?',
+    answer: 'Not yet. ParkSafe covers the five boroughs of New York City.',
+  },
+  {
+    question: 'Do I still need to read the parking signs?',
+    answer:
+      'Yes. Signs can change before the city updates its data, so always check the posted signs where you park. ParkSafe helps you understand them and remember when to move.',
+  },
+];
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${site}#organization`,
+      name: 'ParkSafe',
+      url: site,
+      logo: new URL('/icon-512.png', site).href,
+      email: 'parksafellc@gmail.com',
+      sameAs: [APP_STORE_URL],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${site}#website`,
+      name: 'ParkSafe',
+      url: site,
+      publisher: { '@id': `${site}#organization` },
+    },
+    {
+      '@type': 'MobileApplication',
+      name: APP_NAME,
+      operatingSystem: 'iOS 17.0 or later',
+      applicationCategory: 'UtilitiesApplication',
+      description:
+        'See every NYC street parking sign on a map, save where you parked, and get reminded before restrictions start.',
+      installUrl: APP_STORE_URL,
+      image: new URL('/icon-512.png', site).href,
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+      publisher: { '@id': `${site}#organization` },
+      ...(rating
+        ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: rating.value, ratingCount: rating.count } }
+        : {}),
+    },
+    {
+      '@type': 'FAQPage',
+      mainEntity: faqs.map(({ question, answer }) => ({
+        '@type': 'Question',
+        name: question,
+        acceptedAnswer: { '@type': 'Answer', text: answer },
+      })),
+    },
+  ],
+};
+---
+
+<Base
+  title="ParkSafe – NYC Street Parking Signs, Reminders & ASP Alerts"
+  description="See every NYC street parking sign on a map, colored by when you have to move. Save where you parked, get reminded before restrictions start, and check alternate side parking. Free on iPhone."
+  structuredData={structuredData}
+>
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Every NYC parking sign, on a map</h1>
+      <p class="lede">
+        ParkSafe shows the street parking rules on every block in New York City, colored by when you have to move.
+        Save where you parked and get reminded before street cleaning or any other restriction starts, so you never get
+        a parking ticket.
+      </p>
+      <div class="hero-download">
+        <AppStoreBadge height={72} />
+        {
+          rating && (
+            <p class="rating">
+              <span aria-hidden="true">★</span> {rating.value.toFixed(1)} on the App Store
+            </p>
+          )
+        }
+      </div>
+      <p class="actions">
+        <a class="button" href="/map/">Open the parking sign map</a>
+        <a class="button button-secondary" href="/asp/">Is ASP suspended today?</a>
+      </p>
+    </div>
+    <div class="hero-phone">
+      <Image
+        src={screenshot}
+        alt="The ParkSafe app showing parking signs on a Brooklyn street, each labeled with how long until it restricts parking"
+        widths={[320, 640]}
+        sizes="(min-width: 768px) 320px, 70vw"
+        loading="eager"
+      />
+    </div>
+  </section>
+
+  <section class="prose">
+    <h2>What ParkSafe does</h2>
+
+    <h3>See every parking sign on a map</h3>
+    <p>
+      Every street parking sign in NYC, color-coded so you can tell at a glance what's clear, what's restricted, and what
+      starts soon. Tap a sign to read its rules: days, hours and conditions. Try it now on
+      the <a href="/map/">parking sign map</a>.
+    </p>
+
+    <h3>Save where you parked</h3>
+    <p>
+      Save your parked location and see exactly when you need to move. ParkSafe shows a live countdown based on the signs
+      at your spot.
+    </p>
+
+    <h3>Get reminded before you have to move</h3>
+    <p>
+      Get notified before a restriction starts so you can move your car in time, and choose how far ahead you want to
+      know.
+    </p>
+
+    <h3>Automatic parking detection</h3>
+    <p>
+      Connect ParkSafe to CarPlay or Bluetooth and it saves your spot when you park, without opening the app.
+    </p>
+
+    <h3>Alternate side parking alerts</h3>
+    <p>
+      Stay on top of the ASP schedule and hear when alternate side parking is suspended for holidays. See today's status
+      on the <a href="/asp/">ASP calendar</a>.
+    </p>
+
+    <h3>Home screen widget</h3>
+    <p>See your parked location, countdown and ASP status on your home screen without opening the app.</p>
+
+    <h2>Privacy first</h2>
+    <p>
+      ParkSafe only uses your location in real time to show nearby parking signs: we don't store it, track it, or share
+      it. Your reminders stay on your device. ParkSafe doesn't ask for your name, email, or an account, and never shares
+      your GPS location with advertisers. The app is supported by ads, which you can remove with an in-app purchase.
+      Read the full <a href="/privacy/">privacy policy</a>.
+    </p>
+
+    <h2>Questions</h2>
+    {
+      faqs.map(({ question, answer }) => (
+        <>
+          <h3>{question}</h3>
+          <p>{answer}</p>
+        </>
+      ))
+    }
+  </section>
+
+  <section class="download-band">
+    <h2>Get ParkSafe for iPhone</h2>
+    <p>Free, with reminders, a home screen widget and automatic parking detection.</p>
+    <AppStoreBadge height={72} />
+  </section>
+</Base>
+
+<style>
+  .hero {
+    display: grid;
+    gap: 24px;
+    align-items: center;
+    padding: 32px 0 8px;
+  }
+
+  .hero h1 {
+    margin: 0 0 12px;
+    font-size: clamp(2rem, 6vw, 2.75rem);
+    line-height: 1.1;
+  }
+
+  .lede {
+    margin: 0 0 20px;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+  }
+
+  .hero-download {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    margin-bottom: 20px;
+  }
+
+  .rating {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .rating span {
+    color: #ff9500;
+  }
+
+  .hero-phone {
+    justify-self: center;
+  }
+
+  .hero-phone img {
+    display: block;
+    width: min(280px, 70vw);
+    height: auto;
+    border-radius: 32px;
+    border: 6px solid #1c1e24;
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.25);
+  }
+
+  .download-band {
+    margin: 40px 0 8px;
+    padding: 28px 20px;
+    border-radius: 16px;
+    background: var(--surface);
+    text-align: center;
+  }
+
+  .download-band h2 {
+    margin: 0 0 6px;
+  }
+
+  .download-band p {
+    margin: 0 0 16px;
+    color: var(--text-muted);
+  }
+
+  @media (min-width: 768px) {
+    .hero {
+      grid-template-columns: 1fr auto;
+      gap: 40px;
+    }
+
+    .hero-phone img {
+      width: 280px;
+    }
+  }
+</style>
