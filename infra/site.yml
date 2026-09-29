@@ -15,6 +15,15 @@ Parameters:
     Type: String
     Default: jonwein/ParkSafeWebsite
     Description: owner/name of the repo whose main branch may publish the site
+  GitHubOwnerId:
+    Type: String
+    Default: '37815716'
+    Description: >
+      Numeric GitHub IDs of the owner and repo. The repo's Actions tokens use GitHub's immutable
+      subject format (repo:owner@id/name@id:...), and matching on the IDs survives renames.
+  GitHubRepoId:
+    Type: String
+    Default: '1143546631'
   WebAclArn:
     Type: String
     Default: ''
@@ -233,7 +242,10 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubRepo}:ref:refs/heads/main
+              StringLike:
+                token.actions.githubusercontent.com:sub:
+                  - !Sub repo:*@${GitHubOwnerId}/*@${GitHubRepoId}:ref:refs/heads/main
+                  - !Sub repo:${GitHubRepo}:ref:refs/heads/main
       Policies:
         - PolicyName: publish-site
           PolicyDocument:
