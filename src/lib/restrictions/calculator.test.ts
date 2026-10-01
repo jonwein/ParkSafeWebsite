@@ -15,15 +15,24 @@ interface Outcome {
 }
 
 const instants = cases.instants.map((iso) => Date.parse(iso));
+// ASP suspensions and school closures, as the generator builds its 311 calendar
 const calendar: AspCalendar = new Map(
-  cases.aspSuspended.map((date) => [date, { date, status: 'suspended' as const, exceptionName: 'Test Holiday' }]),
+  [...new Set([...cases.aspSuspended, ...cases.schoolsClosed])].map((date) => {
+    const suspended = cases.aspSuspended.includes(date);
+    return [
+      date,
+      {
+        date,
+        status: suspended ? ('suspended' as const) : ('inEffect' as const),
+        ...(suspended ? { exceptionName: 'Test Holiday' } : {}),
+        ...(cases.schoolsClosed.includes(date) ? { schoolsOpen: false } : {}),
+      },
+    ];
+  }),
 );
 
 function outcome(sign: ReturnType<typeof toSign>, at: number, withAsp: boolean): Outcome {
-  const status = signStatus(sign.windows, at, {
-    specialConditions: sign.properties.special_conditions,
-    ...(withAsp ? { category: sign.category, calendar } : {}),
-  });
+  const status = signStatus(sign.windows, at, withAsp ? { category: sign.category, calendar } : {});
   const info = durationInfo(status);
   return {
     status: status.kind,

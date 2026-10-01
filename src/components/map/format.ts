@@ -3,7 +3,7 @@
 import { formatDuration, type RestrictionStatus } from '../../lib/restrictions/calculator';
 import { DAYS_OF_WEEK, dayAbbreviation, parseTime } from '../../lib/restrictions/days';
 import type { SignProperties, SignWindow } from '../../lib/restrictions/sign';
-import { isAlwaysRestricted } from '../../lib/restrictions/timeCalculator';
+import { isAlwaysRestricted, type Season } from '../../lib/restrictions/timeCalculator';
 
 /** "WEST   46 STREET" → "West 46 Street" */
 export function formatStreet(name: string | null | undefined): string {
@@ -52,8 +52,14 @@ export function formatDays(days: string[] | null | undefined): string | undefine
   return ordered.join(', ');
 }
 
-/** "Mon–Fri, 7 AM–10 AM" or "Anytime" */
+/** "Mon–Fri, 7 AM–10 AM", "Anytime, May 15–Sep 30" or "Mon–Fri, 7 AM–4 PM, school days" */
 export function formatWindow(window: SignWindow): string {
+  return [formatHours(window), window.season && formatSeason(window.season), window.schoolDays && 'school days']
+    .filter(Boolean)
+    .join(', ');
+}
+
+function formatHours(window: SignWindow): string {
   if (isAlwaysRestricted(window.days, window.startTime, window.endTime)) return 'Anytime';
   const days = formatDays(window.days);
   const start = formatClock(window.startTime);
@@ -63,8 +69,15 @@ export function formatWindow(window: SignWindow): string {
   return days ?? hours ?? 'Hours not listed';
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** "May 15–Sep 30" */
+export function formatSeason(season: Season): string {
+  return `${MONTHS[season.startMonth - 1]} ${season.startDay}–${MONTHS[season.endMonth - 1]} ${season.endDay}`;
+}
+
 /** One line for the status chip */
-export function formatStatus(status: RestrictionStatus, specialConditions?: string[] | null): string {
+export function formatStatus(status: RestrictionStatus): string {
   switch (status.kind) {
     case 'neverAvailable':
       return 'Restricted at all times';
@@ -76,6 +89,6 @@ export function formatStatus(status: RestrictionStatus, specialConditions?: stri
         ? `Restriction starts in ${formatDuration(status.minutes)}`
         : `Clear for ${formatDuration(status.minutes)}`;
     case 'unknown':
-      return specialConditions?.length ? 'Special conditions: read the sign' : 'Read the sign';
+      return 'Read the sign';
   }
 }

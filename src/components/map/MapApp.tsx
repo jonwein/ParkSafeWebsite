@@ -389,7 +389,7 @@ function Intro() {
         </li>
       </ul>
       <p class="fine-print">
-        Always read the posted signs. Sign data from NYC DOT, updated daily. Street cleaning is shown as clear on days
+        Always read the posted signs. Sign data from NYC DOT, updated weekly. Street cleaning is shown as clear on days
         alternate side parking is suspended.
       </p>
       <div class="intro-app">

@@ -4,7 +4,7 @@
 import type { AspCalendar } from './asp';
 import { parseTime } from './days';
 import { nycDateKey } from './nycTime';
-import { activeWindow, isAlwaysRestricted, nextRestrictionStart } from './timeCalculator';
+import { activeWindow, isAlwaysRestricted, nextRestrictionStart, seasonContains, seasonNextStart, type Season } from './timeCalculator';
 
 export type RestrictionStatus =
   /** Safe to park, with minutes until the next restriction (undefined when none is coming) */
@@ -21,42 +21,52 @@ export interface Window {
   days: string[] | null | undefined;
   startTime: string | null | undefined;
   endTime: string | null | undefined;
+  /** For a seasonal sign, the part of each year it applies */
+  season?: Season;
+  /** Applies only on days the public schools are open */
+  schoolDays?: boolean;
 }
 
 export interface StatusOptions {
-  specialConditions?: string[] | null;
   /** Sign category; "StreetCleaning" is lifted on ASP-suspended days */
   category?: string | null;
+  /** The 311 calendar: ASP suspensions and school closures */
   calendar?: AspCalendar;
 }
 
-function isSuspended(calendar: AspCalendar | undefined, instant: number): boolean {
-  return calendar?.get(nycDateKey(instant))?.status === 'suspended';
-}
-
-/** Status of one restriction window at `at` */
+/**
+ * Status of one restriction window at `at`. Special conditions ("COMMERCIAL VEHICLES ONLY",
+ * "PERMIT REQUIRED") don't change it: each names who else may park, so for a private car the
+ * rule simply applies.
+ */
 export function windowStatus(window: Window, at: number, options: StatusOptions = {}): RestrictionStatus {
-  const { days, startTime, endTime } = window;
+  const { days, startTime, endTime, season, schoolDays } = window;
   if (!days?.length || startTime == null || endTime == null) return { kind: 'unknown' };
-
-  // Special conditions are too complex to calculate reliably
-  if (options.specialConditions?.length) return { kind: 'unknown' };
 
   if (!parseTime(startTime) || !parseTime(endTime)) return { kind: 'unknown' };
 
-  if (isAlwaysRestricted(days, startTime, endTime)) return { kind: 'neverAvailable' };
+  // 24/7, or 24/7 for part of the year
+  if (isAlwaysRestricted(days, startTime, endTime)) {
+    if (!season || seasonContains(season, at)) return { kind: 'neverAvailable' };
+    return { kind: 'safe', minutes: Math.ceil((seasonNextStart(season, at) - at) / 60_000) };
+  }
 
-  // Street cleaning isn't enforced on ASP-suspended days
-  const aspApplies = options.category === 'StreetCleaning' && Boolean(options.calendar?.size);
-  const suspended = (instant: number) => aspApplies && isSuspended(options.calendar, instant);
+  // Windows that don't apply on the day they'd start: out of season, school-day signs on days
+  // schools are closed, and street cleaning on ASP-suspended days
+  const suspended = (start: number) => {
+    if (season && !seasonContains(season, start)) return true;
+    const day = options.calendar?.get(nycDateKey(start));
+    if (schoolDays && day?.schoolsOpen === false) return true;
+    return options.category === 'StreetCleaning' && day?.status === 'suspended';
+  };
 
   const inForce = activeWindow(days, startTime, endTime, at, suspended);
   if (inForce) return { kind: 'restricted', minutes: Math.ceil((inForce.end - at) / 60_000) };
 
-  // Next start, skipping street cleaning on ASP-suspended days
-  let nextStart = nextRestrictionStart(days, startTime, at);
+  // Next start, skipping the ones that don't apply
+  let nextStart = nextRestrictionStart(days, startTime, at, season);
   while (nextStart !== undefined && suspended(nextStart)) {
-    nextStart = nextRestrictionStart(days, startTime, nextStart);
+    nextStart = nextRestrictionStart(days, startTime, nextStart, season);
   }
   return {
     kind: 'safe',

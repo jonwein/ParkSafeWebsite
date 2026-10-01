@@ -11,6 +11,11 @@ export interface AspDay {
   status: AspStatus;
   exceptionName?: string;
   details?: string;
+  /**
+   * Whether the public schools are open, from the same 311 calendar; undefined when it doesn't
+   * say. SCHOOL DAYS signs don't apply on days they're closed or not in session.
+   */
+  schoolsOpen?: boolean;
 }
 
 export type AspCalendar = Map<string, AspDay>;
@@ -37,11 +42,14 @@ export function parseAspCalendar(response: Nyc311Response): AspCalendar {
     const item = day.items?.find((i) => i.type === 'Alternate Side Parking');
     if (!match || !item) continue;
     const date = `${match[1]}-${match[2]}-${match[3]}`;
+    const schools = day.items?.find((i) => i.type === 'Schools');
     calendar.set(date, {
       date,
       status: statusFrom(item.status),
       exceptionName: item.exceptionName || undefined,
       details: item.details || undefined,
+      // "OPEN", "CLOSED" (a holiday) or "NOT IN SESSION" (weekends and breaks)
+      schoolsOpen: schools ? schools.status.toUpperCase() === 'OPEN' : undefined,
     });
   }
   return calendar;

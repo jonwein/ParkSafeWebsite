@@ -29,7 +29,7 @@ export function PoleDetails({ pole, aspToday, onClose }: Props) {
       </ul>
       <p class="fine-print">
         Always read the posted signs: they can change before the city's data does. Sign data from NYC DOT, updated
-        daily.
+        weekly.
       </p>
     </section>
   );
@@ -50,14 +50,17 @@ function SignCard({ poleSign, aspToday }: { poleSign: PoleSign; aspToday: AspDay
         <h3>{formatType(sign.category)}</h3>
         {p.time_limit_minutes ? <span class="tag">{formatLimit(p.time_limit_minutes)} limit</span> : null}
       </div>
-      <p class={`status status-${color}`}>{formatStatus(status, p.special_conditions)}</p>
+      <p class={`status status-${color}`}>{formatStatus(status)}</p>
       <ul class="windows">
         {sign.windows.map((window, i) => (
           <li key={i}>{formatWindow(window)}</li>
         ))}
       </ul>
       {p.special_conditions?.length ? (
-        <p class="note">Applies to {p.special_conditions.map((c) => formatStreet(c).toLowerCase()).join(', ')}</p>
+        <p class="note">
+          Read the sign for exceptions:{' '}
+          {p.special_conditions.map((c) => formatStreet(c.replace(/^EXCEPT:\s*/, '')).toLowerCase()).join(', ')}
+        </p>
       ) : null}
       {aspSuspended ? (
         <p class="note note-good">

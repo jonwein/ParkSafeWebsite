@@ -43,11 +43,7 @@ export function buildPoles(signs: Iterable<Sign>, filters: SignFilters, at: numb
     const signs = group
       .sort((a, b) => compare(a.properties.sign_description ?? '', b.properties.sign_description ?? ''))
       .map((sign) => {
-        const status = signStatus(sign.windows, at, {
-          specialConditions: sign.properties.special_conditions,
-          category: sign.category,
-          calendar,
-        });
+        const status = signStatus(sign.windows, at, { category: sign.category, calendar });
         return { sign, status, ...durationInfo(status) };
       });
     const color = URGENCY.find((c) => signs.some((s) => s.color === c)) ?? 'gray';

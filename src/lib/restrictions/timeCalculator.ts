@@ -3,8 +3,69 @@
 import { parseTime, weekdayNumber } from './days';
 import { nycDateAfter, nycInstant, nycParts } from './nycTime';
 
-/** The next restriction start after `after` for a days/start-time rule */
-export function nextRestrictionStart(days: string[], startTime: string, after: number): number | undefined {
+/**
+ * The part of each year a seasonal sign applies ("NO PARKING ANYTIME MAY 15 - SEPT 30"), from the
+ * backend's "MM-DD" season_start/season_end. A season can run over New Year. Port of Season.
+ */
+export interface Season {
+  startMonth: number;
+  startDay: number;
+  endMonth: number;
+  endDay: number;
+}
+
+export function parseSeason(start: string | null | undefined, end: string | null | undefined): Season | undefined {
+  const parse = (text: string | null | undefined) => {
+    const parts = (text ?? '').split('-').filter(Boolean).map(Number);
+    if (parts.length !== 2 || !parts.every(Number.isInteger)) return undefined;
+    const [month, day] = parts;
+    return month >= 1 && month <= 12 && day >= 1 && day <= 31 ? { month, day } : undefined;
+  };
+  const from = parse(start);
+  const to = parse(end);
+  if (!from || !to) return undefined;
+  return { startMonth: from.month, startDay: from.day, endMonth: to.month, endDay: to.day };
+}
+
+/** Whether the instant's New York day falls in the season */
+export function seasonContains(season: Season, instant: number): boolean {
+  const { month, day } = nycParts(instant);
+  const date = month * 100 + day;
+  const start = season.startMonth * 100 + season.startDay;
+  const end = season.endMonth * 100 + season.endDay;
+  return start <= end ? date >= start && date <= end : date >= start || date <= end;
+}
+
+/** `instant` if it's in season, otherwise the start (midnight, New York) of the next season */
+export function seasonNextStart(season: Season, instant: number): number {
+  if (seasonContains(season, instant)) return instant;
+  const { year } = nycParts(instant);
+  const thisYear = nycInstant(year, season.startMonth, season.startDay);
+  return thisYear > instant ? thisYear : nycInstant(year + 1, season.startMonth, season.startDay);
+}
+
+/** The next restriction start after `after` for a days/start-time rule, in season if it has one */
+export function nextRestrictionStart(
+  days: string[],
+  startTime: string,
+  after: number,
+  season?: Season,
+): number | undefined {
+  if (!season) return nextStartIgnoringSeason(days, startTime, after);
+  // Search from the season's start when out of season, and again past a season's end
+  let from = after;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const seasonStart = seasonNextStart(season, from);
+    const searchFrom = seasonStart > from ? seasonStart - 1000 : from;
+    const start = nextStartIgnoringSeason(days, startTime, searchFrom);
+    if (start === undefined) return undefined;
+    if (seasonContains(season, start)) return start;
+    from = start;
+  }
+  return undefined;
+}
+
+function nextStartIgnoringSeason(days: string[], startTime: string, after: number): number | undefined {
   if (!days.length) return undefined;
   const time = parseTime(startTime);
   if (!time) return undefined;
