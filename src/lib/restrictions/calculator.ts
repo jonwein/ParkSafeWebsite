@@ -2,9 +2,9 @@
 // how long. Checked against the iOS app's own output in calculator.test.ts.
 
 import type { AspCalendar } from './asp';
-import { abbreviationForWeekday, dayAbbreviation, parseTime } from './days';
-import { nycDateKey, nycParts } from './nycTime';
-import { isAlwaysRestricted, nextRestrictionStart } from './timeCalculator';
+import { parseTime } from './days';
+import { nycDateKey } from './nycTime';
+import { activeWindow, isAlwaysRestricted, nextRestrictionStart } from './timeCalculator';
 
 export type RestrictionStatus =
   /** Safe to park, with minutes until the next restriction (undefined when none is coming) */
@@ -42,59 +42,21 @@ export function windowStatus(window: Window, at: number, options: StatusOptions 
   // Special conditions are too complex to calculate reliably
   if (options.specialConditions?.length) return { kind: 'unknown' };
 
-  const start = parseTime(startTime);
-  const end = parseTime(endTime);
-  if (!start || !end) return { kind: 'unknown' };
-
-  const restrictionDays = new Set(days.map(dayAbbreviation).filter(Boolean));
-  const startTotal = start.hour * 60 + start.minute;
-  const endTotal = end.hour * 60 + end.minute;
+  if (!parseTime(startTime) || !parseTime(endTime)) return { kind: 'unknown' };
 
   if (isAlwaysRestricted(days, startTime, endTime)) return { kind: 'neverAvailable' };
 
-  const now = nycParts(at);
-  const currentTotal = now.hour * 60 + now.minute;
-  const appliesToday = restrictionDays.has(abbreviationForWeekday(now.weekday));
-  const isOvernight = endTotal <= startTotal;
-
-  // Minutes are counted on the wall clock here, as the app does
-  let restrictedNow = false;
-  let minutesUntilEnd = 0;
-  if (appliesToday) {
-    if (isOvernight) {
-      if (currentTotal >= startTotal) {
-        restrictedNow = true;
-        minutesUntilEnd = 1440 - currentTotal + endTotal;
-      } else if (currentTotal < endTotal) {
-        restrictedNow = true;
-        minutesUntilEnd = endTotal - currentTotal;
-      }
-    } else if (currentTotal >= startTotal && currentTotal < endTotal) {
-      restrictedNow = true;
-      minutesUntilEnd = endTotal - currentTotal;
-    }
-  }
-
-  // An overnight window that started yesterday
-  if (!appliesToday && isOvernight && currentTotal < endTotal) {
-    const yesterday = now.weekday === 1 ? 7 : now.weekday - 1;
-    if (restrictionDays.has(abbreviationForWeekday(yesterday))) {
-      restrictedNow = true;
-      minutesUntilEnd = endTotal - currentTotal;
-    }
-  }
-
+  // Street cleaning isn't enforced on ASP-suspended days
   const aspApplies = options.category === 'StreetCleaning' && Boolean(options.calendar?.size);
-  if (restrictedNow && !(aspApplies && isSuspended(options.calendar, at))) {
-    return { kind: 'restricted', minutes: minutesUntilEnd };
-  }
+  const suspended = (instant: number) => aspApplies && isSuspended(options.calendar, instant);
 
-  // Next start, skipping street cleaning on ASP-suspended days; minutes here are real time
+  const inForce = activeWindow(days, startTime, endTime, at, suspended);
+  if (inForce) return { kind: 'restricted', minutes: Math.ceil((inForce.end - at) / 60_000) };
+
+  // Next start, skipping street cleaning on ASP-suspended days
   let nextStart = nextRestrictionStart(days, startTime, at);
-  if (aspApplies) {
-    while (nextStart !== undefined && isSuspended(options.calendar, nextStart)) {
-      nextStart = nextRestrictionStart(days, startTime, nextStart);
-    }
+  while (nextStart !== undefined && suspended(nextStart)) {
+    nextStart = nextRestrictionStart(days, startTime, nextStart);
   }
   return {
     kind: 'safe',
