@@ -28,21 +28,40 @@ export function nextNotificationTime(
   leadTimeMinutes: number,
   after: number,
 ): number | undefined {
-  if (!days.length) return undefined;
+  // The first start whose notification is still ahead
+  const lead = leadTimeMinutes * 60_000;
+  const start = nextRestrictionStart(days, startTime, after + lead);
+  return start === undefined ? undefined : start - lead;
+}
+
+/**
+ * The window of a days/start/end rule in force at `now`, if any. A window starts on one of
+ * `days` and lasts at most 24 hours, running past midnight when it ends before it starts
+ * ("Mon 10PM-6AM" is Monday night into Tuesday morning), so only yesterday's and today's
+ * windows can contain `now`. `isSuspended` says whether the window starting at an instant
+ * doesn't apply (street cleaning on an ASP-suspended day).
+ */
+export function activeWindow(
+  days: string[],
+  startTime: string,
+  endTime: string,
+  now: number,
+  isSuspended: (start: number) => boolean = () => false,
+): { start: number; end: number } | undefined {
   const time = parseTime(startTime);
   if (!time) return undefined;
-  const weekdays = days.map(weekdayNumber).filter((w): w is number => w !== undefined);
-  if (!weekdays.length) return undefined;
+  const weekdays = new Set(days.map(weekdayNumber).filter((w) => w !== undefined));
 
-  let soonest: number | undefined;
-  for (let offset = 0; offset < 8; offset++) {
-    const date = nycDateAfter(after, offset);
-    if (!weekdays.includes(date.weekday)) continue;
+  for (const offset of [-1, 0]) {
+    const date = nycDateAfter(now, offset);
+    if (!weekdays.has(date.weekday)) continue;
     const start = nycInstant(date.year, date.month, date.day, time.hour, time.minute);
-    const notify = start - leadTimeMinutes * 60_000;
-    if (notify > after && (soonest === undefined || notify < soonest)) soonest = notify;
+    if (start > now) continue;
+    const end = restrictionEndDate(start, endTime);
+    if (end === undefined || end <= now || isSuspended(start)) continue;
+    return { start, end };
   }
-  return soonest;
+  return undefined;
 }
 
 /** When a restriction that started at `start` ends; an end at or before the start is the next day */
