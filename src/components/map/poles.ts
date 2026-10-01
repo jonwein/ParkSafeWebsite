@@ -17,13 +17,16 @@ export interface Pole {
   lng: number;
   lat: number;
   signs: PoleSign[];
-  /** Most urgent sign's color: upcoming (orange) first, then active (red), then clear (green) */
+  /**
+   * Most urgent sign's color: restricted now (red) first, so a sign in force never hides
+   * behind another sign's countdown, then upcoming (orange), then clear (green)
+   */
   color: PinColor;
   /** That sign's duration label */
   label: string | undefined;
 }
 
-const URGENCY: PinColor[] = ['orange', 'red', 'green'];
+const URGENCY: PinColor[] = ['red', 'orange', 'green'];
 
 export function buildPoles(signs: Iterable<Sign>, filters: SignFilters, at: number, calendar: AspCalendar): Pole[] {
   const groups = new Map<string, Sign[]>();
