@@ -3,6 +3,7 @@
 
 import type { Window } from './calculator';
 import { dayAbbreviation, parseTime } from './days';
+import { parseSeason } from './timeCalculator';
 
 export interface SignProperties {
   order_number?: string | null;
@@ -23,7 +24,18 @@ export interface SignProperties {
   restriction_end_time?: string | null;
   time_limit_minutes?: number | null;
   special_conditions?: string[] | null;
-  restriction_windows?: { days?: string[] | null; start_time?: string | null; end_time?: string | null }[] | null;
+  restriction_windows?:
+    | {
+        days?: string[] | null;
+        start_time?: string | null;
+        end_time?: string | null;
+        /** "MM-DD": a seasonal sign applies only between these dates each year */
+        season_start?: string | null;
+        season_end?: string | null;
+        /** Applies only on days the public schools are open ("SCHOOL DAYS") */
+        school_days?: boolean | null;
+      }[]
+    | null;
 }
 
 export interface SignFeature {
@@ -134,6 +146,8 @@ export function toSign(feature: SignFeature): Sign {
     days: w.days ?? undefined,
     startTime: w.start_time ?? undefined,
     endTime: w.end_time ?? undefined,
+    season: parseSeason(w.season_start, w.season_end),
+    schoolDays: w.school_days ?? false,
   }));
   const windows = (
     parsed.length
