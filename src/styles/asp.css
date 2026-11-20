@@ -109,6 +109,12 @@
   color: var(--text-muted);
 }
 
+/* 311 hasn't published the day yet */
+.asp-day-noInformation {
+  background: none;
+  color: var(--text-muted);
+}
+
 .asp-day-today {
   outline: 2px solid var(--brand);
   outline-offset: 1px;

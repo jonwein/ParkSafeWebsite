@@ -56,13 +56,35 @@ describe('311 calendar', () => {
         { today_id: '20260929', items: [{ type: 'Alternate Side Parking', status: 'IN EFFECT' }, { type: 'Schools', status: 'OPEN' }] },
         { today_id: '20261003', items: [{ type: 'Alternate Side Parking', status: 'NOT IN EFFECT' }, { type: 'Schools', status: 'NOT IN SESSION' }] },
         { today_id: '20261004', items: [{ type: 'Alternate Side Parking', status: 'NOT IN EFFECT' }] },
+        // Election Day 2026: classes were remote, still a school day (it read as closed)
+        { today_id: '20261103', items: [{ type: 'Alternate Side Parking', status: 'SUSPENDED' }, { type: 'Schools', status: 'REMOTE ONLY' }] },
       ],
     });
-    expect(['2026-09-28', '2026-09-29', '2026-10-03', '2026-10-04'].map((d) => calendar.get(d)?.schoolsOpen)).toEqual([
+    expect(['2026-09-28', '2026-09-29', '2026-10-03', '2026-10-04', '2026-11-03'].map((d) => calendar.get(d)?.schoolsOpen)).toEqual([
       false,
       true,
       false,
       undefined,
+      true,
     ]);
+  });
+
+  it('keeps days 311 has not published apart from days in effect', () => {
+    const calendar = parseAspCalendar({
+      days: [
+        {
+          today_id: '20270101',
+          items: [
+            { type: 'Alternate Side Parking', status: 'NO INFORMATION', exceptionName: 'Information Not Available' },
+            { type: 'Schools', status: 'CLOSED' },
+          ],
+        },
+      ],
+    });
+    const newYear = calendar.get('2027-01-01');
+    expect(newYear?.status).toBe('noInformation');
+    expect(newYear?.exceptionName).toBeUndefined();
+    // What 311 does know is kept: the schools are out
+    expect(newYear?.schoolsOpen).toBe(false);
   });
 });

@@ -6,7 +6,7 @@ import { dateKey, nycDateKey } from '../lib/restrictions/nycTime';
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function headline(day: AspDay | undefined, calendar: AspCalendar, today: string): string {
-  if (!day) return 'Today’s status isn’t available';
+  if (!day || day.status === 'noInformation') return 'Today’s status isn’t available';
   if (day.status === 'suspended') {
     const through = suspendedThrough(calendar, today);
     return `Suspended today${through ? ` through ${formatDateKey(through)}` : ''}`;
@@ -91,13 +91,20 @@ function MonthGrid({ month, calendar, today }: { month: string; calendar: AspCal
           const key = dateKey(year, monthNumber, i + 1);
           const day = calendar.get(key);
           const label = day?.status === 'suspended' ? holidayName(day.exceptionName) ?? 'Suspended' : undefined;
+          const spoken = label
+            ? `suspended for ${label}`
+            : day?.status === 'notInEffect'
+              ? 'not in effect'
+              : day?.status === 'noInformation'
+                ? 'not announced yet'
+                : 'in effect';
           return (
             <span
               key={key}
               role="gridcell"
               class={`asp-day asp-day-${day?.status ?? 'unknown'}${key === today ? ' asp-day-today' : ''}`}
-              title={label}
-              aria-label={`${formatDateKey(key)}: ${label ? `suspended for ${label}` : day?.status === 'notInEffect' ? 'not in effect' : 'in effect'}`}
+              title={label ?? (day?.status === 'noInformation' ? 'Not announced yet' : undefined)}
+              aria-label={`${formatDateKey(key)}: ${spoken}`}
             >
               {i + 1}
             </span>
