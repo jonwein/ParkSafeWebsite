@@ -3,7 +3,11 @@
 
 import { dateKey, nycDateAfter } from './nycTime';
 
-export type AspStatus = 'inEffect' | 'suspended' | 'notInEffect';
+/**
+ * `noInformation`: 311 hasn't published the day yet ("NO INFORMATION": in November, all of next
+ * January). Not a suspension, but not known to be in effect either.
+ */
+export type AspStatus = 'inEffect' | 'suspended' | 'notInEffect' | 'noInformation';
 
 export interface AspDay {
   /** "YYYY-MM-DD" in New York */
@@ -12,8 +16,9 @@ export interface AspDay {
   exceptionName?: string;
   details?: string;
   /**
-   * Whether the public schools are open, from the same 311 calendar; undefined when it doesn't
-   * say. SCHOOL DAYS signs don't apply on days they're closed or not in session.
+   * Whether the public schools are in session (in person or remote), from the same 311 calendar;
+   * undefined when it doesn't say. SCHOOL DAYS signs don't apply on days they're closed or not in
+   * session.
    */
   schoolsOpen?: boolean;
 }
@@ -30,10 +35,15 @@ function statusFrom(raw: string): AspStatus {
       return 'suspended';
     case 'NOT IN EFFECT':
       return 'notInEffect';
+    case 'NO INFORMATION':
+      return 'noInformation';
     default:
       return 'inEffect';
   }
 }
+
+/** The Schools statuses on which SCHOOL DAYS signs don't apply */
+const SCHOOLS_OUT = new Set(['CLOSED', 'NOT IN SESSION']);
 
 export function parseAspCalendar(response: Nyc311Response): AspCalendar {
   const calendar: AspCalendar = new Map();
@@ -43,13 +53,17 @@ export function parseAspCalendar(response: Nyc311Response): AspCalendar {
     if (!match || !item) continue;
     const date = `${match[1]}-${match[2]}-${match[3]}`;
     const schools = day.items?.find((i) => i.type === 'Schools');
+    const status = statusFrom(item.status);
     calendar.set(date, {
       date,
-      status: statusFrom(item.status),
-      exceptionName: item.exceptionName || undefined,
+      status,
+      // An unpublished day's is "Information Not Available", which its status says
+      exceptionName: (status !== 'noInformation' && item.exceptionName) || undefined,
       details: item.details || undefined,
-      // "OPEN", "CLOSED" (a holiday) or "NOT IN SESSION" (weekends and breaks)
-      schoolsOpen: schools ? schools.status.toUpperCase() === 'OPEN' : undefined,
+      // Out only when "CLOSED" (a holiday) or "NOT IN SESSION" (weekends and breaks). "OPEN" and
+      // "REMOTE ONLY" (Election Day 2026) are school days, and so is a status 311 adds later: the
+      // signs apply unless the schools are known to be out.
+      schoolsOpen: schools ? !SCHOOLS_OUT.has(schools.status.toUpperCase()) : undefined,
     });
   }
   return calendar;

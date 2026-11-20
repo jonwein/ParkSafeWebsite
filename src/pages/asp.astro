@@ -23,7 +23,8 @@ const todayLabel = formatDateKey(today, { weekday: 'long', month: 'long', day: '
 
 let description =
   "Today's NYC alternate side parking status and every upcoming suspension, from the city's 311 calendar.";
-if (todayEntry) {
+// A day 311 hasn't published keeps the generic description
+if (todayEntry && todayEntry.status !== 'noInformation') {
   const status =
     todayEntry.status === 'suspended'
       ? `alternate side parking is suspended${todayEntry.exceptionName ? ` for ${holidayName(todayEntry.exceptionName)}` : ''}`

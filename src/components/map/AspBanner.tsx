@@ -10,7 +10,8 @@ interface Props {
 export function AspBanner({ calendar, now }: Props) {
   const key = nycDateKey(now);
   const today = calendar.get(key);
-  if (!today) return null;
+  // Nothing to say about a day 311 hasn't published
+  if (!today || today.status === 'noInformation') return null;
 
   let text: string;
   if (today.status === 'suspended') {
